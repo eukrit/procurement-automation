@@ -30,13 +30,13 @@ AI-powered procurement automation for GO Corporation. Manages RFQ workflows, ven
 - **Compute SA:** 538978391890-compute@developer.gserviceaccount.com
 
 ### Firestore Database
-- **Database:** `procurement-automation` (named database, us-central1) — NOT `(default)`
+- **Database:** `procurement-automation` (named database, asia-southeast1) — NOT `(default)`
 - **Env var:** `FIRESTORE_DATABASE=procurement-automation`
 - **Collections:**
-  - `rfq_campaigns` — RFQ campaigns (each campaign = one sourcing round)
-  - `rfq_campaigns/{id}/vendors/{vendor_id}` — Vendor responses per campaign
-  - `rfq_campaigns/{id}/vendors/{vendor_id}/messages/{msg_id}` — Email thread per vendor
-  - `vendor_directory` — Master vendor directory (cross-campaign)
+  - `rfq_inquiries` — RFQ inquiries (each inquiry = one sourcing round)
+  - `rfq_inquiries/{id}/vendors/{vendor_id}` — Vendor responses per inquiry
+  - `rfq_inquiries/{id}/vendors/{vendor_id}/messages/{msg_id}` — Email thread per vendor
+  - `vendor_directory` — Master vendor directory (cross-inquiry)
   - `procurement_templates` — Reusable RFQ templates
   - `workflow_config` — Automation rules, escalation thresholds, reminder schedules
 
@@ -58,7 +58,7 @@ AI-powered procurement automation for GO Corporation. Manages RFQ workflows, ven
 
 ### Key Files
 - `main.py` — Cloud Function entry points
-- `src/rfq_store.py` — Firestore CRUD for RFQ campaigns
+- `src/rfq_store.py` — Firestore CRUD for RFQ inquiries
 - `src/gmail_sender.py` — Gmail send client
 - `src/parsers/rfq_gemini.py` — Gemini prompts for RFQ classification, extraction, auto-reply
 - `src/rfq_workflow.py` — State machine, auto-reply orchestration, escalation
