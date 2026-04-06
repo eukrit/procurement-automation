@@ -13,6 +13,7 @@ import json
 import logging
 
 import functions_framework
+from google.cloud import firestore
 from flask import Request
 
 from src.rfq_store import (
@@ -23,10 +24,23 @@ from src.rfq_store import (
     add_vendor_to_inquiry,
     log_message,
     update_vendor_status,
+    update_vendor_rates,
+    match_sender_to_vendor,
+    get_template,
 )
 from src.gmail_sender import (
     get_gmail_send_service,
     send_rfq_to_vendor,
+    send_auto_reply,
+)
+from src.gmail_reader import (
+    get_new_messages,
+    strip_html,
+)
+from src.parsers.rfq_gemini import (
+    classify_vendor_response,
+    extract_vendor_rates,
+    generate_auto_reply,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -186,10 +200,335 @@ def send_rfq(request: Request):
 def process_procurement_email(cloud_event):
     """Pub/Sub trigger from Gmail watch — processes inbound vendor emails.
 
-    Phase 3 implementation. Currently a stub.
+    Flow:
+    1. Fetch new messages from Gmail History API
+    2. For each message, match sender to an active inquiry vendor
+    3. Classify with Gemini (intent, questions, rate data)
+    4. Route by intent: extract rates, flag for auto-reply, escalate, etc.
+    5. Log everything to Firestore
     """
-    logger.info("process_procurement_email triggered — Phase 3 stub")
-    return
+    logger.info("process_procurement_email triggered")
+
+    db = get_db()
+
+    # 1. Get new messages
+    try:
+        messages = get_new_messages(db=db)
+    except Exception as e:
+        logger.error("Failed to fetch Gmail messages: %s", e)
+        return
+
+    if not messages:
+        logger.info("No new messages")
+        return
+
+    logger.info("Processing %d new messages", len(messages))
+
+    for msg in messages:
+        try:
+            _process_single_message(msg, db)
+        except Exception as e:
+            logger.error(
+                "Error processing message %s from %s: %s",
+                msg.get("id"),
+                msg.get("sender_email"),
+                e,
+            )
+
+
+def _process_single_message(msg: dict, db) -> None:
+    """Process a single inbound Gmail message."""
+    sender_email = msg.get("sender_email", "")
+    subject = msg.get("subject", "")
+    msg_id = msg.get("id", "")
+
+    logger.info("Processing message %s from %s: %s", msg_id, sender_email, subject)
+
+    # 2. Match sender to a vendor in an active inquiry
+    match = match_sender_to_vendor(sender_email, db=db)
+    if not match:
+        logger.info("No vendor match for sender %s — skipping", sender_email)
+        return
+
+    inquiry_id = match["inquiry_id"]
+    vendor_id = match["vendor_id"]
+
+    inquiry = get_inquiry(inquiry_id, db=db)
+    vendor = get_vendor(inquiry_id, vendor_id, db=db)
+    if not inquiry or not vendor:
+        logger.warning("Inquiry or vendor not found: %s / %s", inquiry_id, vendor_id)
+        return
+
+    logger.info("Matched: inquiry=%s vendor=%s", inquiry_id, vendor_id)
+
+    # Get email body text for Gemini
+    body_text = msg.get("body_text") or strip_html(msg.get("body_html", ""))
+
+    # 3. Classify with Gemini
+    classification = classify_vendor_response(
+        sender=msg.get("sender", ""),
+        subject=subject,
+        body=body_text,
+        inquiry_title=inquiry.get("title", ""),
+    )
+
+    # 4. Log the inbound message with Gemini analysis
+    message_data = {
+        "message_id": msg_id,
+        "direction": "inbound",
+        "type": _intent_to_message_type(classification.get("intent", "unrelated")),
+        "subject": subject,
+        "sender": msg.get("sender", ""),
+        "recipients": [msg.get("headers", {}).get("to", "")],
+        "body_preview": msg.get("body_preview", "")[:5000],
+        "gmail_link": f"https://mail.google.com/mail/u/0/#inbox/{msg_id}",
+        "thread_id": msg.get("threadId"),
+        "attachments": msg.get("attachments", []),
+        "gemini_analysis": {
+            "intent": classification.get("intent"),
+            "confidence": classification.get("confidence", 0),
+            "summary": classification.get("summary", ""),
+            "extracted_data": {},
+            "questions_from_vendor": classification.get("questions_from_vendor", []),
+            "missing_fields": classification.get("missing_fields", []),
+            "auto_reply_draft": None,
+            "auto_reply_confidence": None,
+            "should_escalate": classification.get("should_escalate", False),
+            "escalation_reason": classification.get("escalation_reason"),
+            "language": classification.get("language", "en"),
+        },
+    }
+
+    log_message(inquiry_id, vendor_id, message_data, db=db)
+
+    # 5. Route by intent
+    intent = classification.get("intent", "unrelated")
+
+    if not classification.get("is_rfq_response", False):
+        logger.info("Not an RFQ response — logged and done")
+        return
+
+    # Update vendor status based on intent
+    if intent == "rate_quote":
+        _handle_rate_quote(inquiry_id, vendor_id, inquiry, vendor, body_text, msg, classification, db)
+    elif intent == "partial_response":
+        update_vendor_status(inquiry_id, vendor_id, "partial_response", note=classification.get("summary", ""), db=db)
+        _handle_questions_or_missing(inquiry_id, vendor_id, inquiry, vendor, body_text, msg, classification, db)
+    elif intent == "question":
+        update_vendor_status(inquiry_id, vendor_id, "question_received", note=classification.get("summary", ""), db=db)
+        _handle_questions_or_missing(inquiry_id, vendor_id, inquiry, vendor, body_text, msg, classification, db)
+    elif intent == "decline":
+        update_vendor_status(inquiry_id, vendor_id, "declined", note=classification.get("summary", ""), db=db)
+        logger.info("Vendor %s declined", vendor_id)
+    elif intent == "out_of_office" or intent == "auto_reply_bounce":
+        logger.info("Out of office / auto-reply from %s — no action", vendor_id)
+    elif intent == "counter_offer":
+        update_vendor_status(inquiry_id, vendor_id, "response_received", note="Counter offer", db=db)
+        _handle_rate_quote(inquiry_id, vendor_id, inquiry, vendor, body_text, msg, classification, db)
+    else:
+        logger.info("Unhandled intent '%s' from %s", intent, vendor_id)
+
+
+def _handle_rate_quote(
+    inquiry_id: str, vendor_id: str, inquiry: dict, vendor: dict,
+    body_text: str, msg: dict, classification: dict, db
+) -> None:
+    """Handle a vendor that sent rate/pricing data."""
+    update_vendor_status(inquiry_id, vendor_id, "response_received", note="Rate quote received", db=db)
+
+    # Extract structured rates with Gemini
+    extraction = extract_vendor_rates(
+        body=body_text,
+        vendor_name=vendor.get("company_en", ""),
+        vendor_company=vendor.get("company_en", ""),
+    )
+
+    if extraction.get("rates"):
+        update_vendor_rates(
+            inquiry_id, vendor_id,
+            rates=extraction.get("rates", {}),
+            benchmark=None,
+            capabilities=extraction.get("capabilities"),
+            db=db,
+        )
+
+    # Check completeness
+    missing = extraction.get("missing_fields", [])
+    if not missing:
+        update_vendor_status(inquiry_id, vendor_id, "complete_response", note="All fields received", db=db)
+    else:
+        logger.info("Vendor %s has missing fields: %s", vendor_id, missing)
+
+    # Update inquiry responded_count
+    db.collection("rfq_inquiries").document(inquiry_id).update({
+        "responded_count": _count_responded(inquiry_id, db),
+    })
+
+    # If there are still questions or missing fields, optionally auto-reply
+    if missing or classification.get("questions_from_vendor"):
+        _handle_questions_or_missing(inquiry_id, vendor_id, inquiry, vendor, body_text, msg, classification, db)
+
+
+def _handle_questions_or_missing(
+    inquiry_id: str, vendor_id: str, inquiry: dict, vendor: dict,
+    body_text: str, msg: dict, classification: dict, db
+) -> None:
+    """Generate auto-reply draft for vendor questions or missing fields."""
+    questions = classification.get("questions_from_vendor", [])
+    missing = classification.get("missing_fields", [])
+
+    if not questions and not missing:
+        return
+
+    # Check auto-reply limits
+    auto_reply_count = vendor.get("email_tracking", {}).get("auto_reply_count", 0)
+    max_auto_replies = inquiry.get("automation_config", {}).get("max_auto_replies_per_vendor", 3)
+
+    if auto_reply_count >= max_auto_replies:
+        logger.info("Vendor %s hit auto-reply limit (%d) — escalating", vendor_id, max_auto_replies)
+        update_vendor_status(inquiry_id, vendor_id, "escalated", note="Auto-reply limit reached", db=db)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, "Auto-reply limit reached", db)
+        return
+
+    # Check for escalation keywords
+    if classification.get("should_escalate"):
+        reason = classification.get("escalation_reason", "Gemini flagged for escalation")
+        update_vendor_status(inquiry_id, vendor_id, "escalated", note=reason, db=db)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, reason, db)
+        return
+
+    # Get template context for auto-reply
+    template = get_template(inquiry.get("template_id", ""), db=db)
+    auto_reply_context = ""
+    if template:
+        auto_reply_context = template.get("auto_reply_context", "")
+
+    # Generate auto-reply with Gemini
+    reply = generate_auto_reply(
+        vendor_name=vendor.get("company_en", ""),
+        vendor_company=vendor.get("company_en", ""),
+        vendor_email_body=body_text,
+        questions=questions,
+        missing_fields=missing,
+        auto_reply_context=auto_reply_context,
+    )
+
+    reply_confidence = reply.get("confidence", 0)
+    min_confidence = inquiry.get("automation_config", {}).get("auto_reply_min_confidence", 0.8)
+
+    if reply.get("should_escalate"):
+        reason = reply.get("escalation_reason", "Auto-reply flagged for escalation")
+        logger.info("Auto-reply escalated for %s: %s", vendor_id, reason)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, reason, db)
+        return
+
+    if reply_confidence >= min_confidence and reply.get("body_html"):
+        # Auto-send the reply
+        thread_id = vendor.get("email_tracking", {}).get("thread_id")
+        last_msg_ids = vendor.get("email_tracking", {}).get("message_ids", [])
+        in_reply_to = last_msg_ids[-1] if last_msg_ids else None
+
+        try:
+            send_result = send_auto_reply(
+                vendor=vendor,
+                subject=reply.get("subject", f"Re: {msg.get('subject', '')}"),
+                body_html=reply["body_html"],
+                thread_id=thread_id or msg.get("threadId", ""),
+                in_reply_to=in_reply_to,
+            )
+
+            # Log the auto-reply
+            log_message(
+                inquiry_id, vendor_id,
+                {
+                    "direction": "outbound",
+                    "type": "auto_reply",
+                    "subject": reply.get("subject", ""),
+                    "sender": "eukrit@goco.bz",
+                    "recipients": [vendor.get("contact_email", "")],
+                    "body_preview": reply.get("body_html", "")[:5000],
+                    "message_id": send_result.get("message_id"),
+                    "thread_id": send_result.get("thread_id"),
+                },
+                db=db,
+            )
+
+            # Increment auto-reply count
+            vendor_ref = (
+                db.collection("rfq_inquiries")
+                .document(inquiry_id)
+                .collection("vendors")
+                .document(vendor_id)
+            )
+            vendor_ref.update({
+                "email_tracking.auto_reply_count": firestore.Increment(1),
+            })
+
+            logger.info("Auto-reply sent to %s (confidence=%.2f)", vendor_id, reply_confidence)
+
+        except Exception as e:
+            logger.error("Failed to send auto-reply to %s: %s", vendor_id, e)
+
+    elif reply_confidence >= 0.6:
+        # Draft for Slack approval
+        logger.info("Auto-reply draft for %s (confidence=%.2f) — needs approval", vendor_id, reply_confidence)
+        _send_slack_draft_approval(inquiry_id, vendor_id, vendor, reply, db)
+    else:
+        # Too low confidence — escalate
+        logger.info("Auto-reply confidence too low (%.2f) for %s — escalating", reply_confidence, vendor_id)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, f"Low confidence auto-reply ({reply_confidence:.2f})", db)
+
+
+def _count_responded(inquiry_id: str, db) -> int:
+    """Count vendors that have responded."""
+    vendors = get_inquiry_vendors(inquiry_id, db=db)
+    return sum(
+        1 for v in vendors
+        if v.get("status") in ("response_received", "complete_response", "partial_response")
+    )
+
+
+def _intent_to_message_type(intent: str) -> str:
+    """Map Gemini intent to message type."""
+    mapping = {
+        "rate_quote": "response",
+        "question": "response",
+        "decline": "response",
+        "partial_response": "response",
+        "counter_offer": "response",
+        "out_of_office": "response",
+        "auto_reply_bounce": "response",
+        "unrelated": "response",
+    }
+    return mapping.get(intent, "response")
+
+
+def _send_slack_escalation(
+    inquiry_id: str, vendor_id: str, vendor: dict, reason: str, db
+) -> None:
+    """Send a Slack notification for escalation (stub — Phase 4 will add full Slack)."""
+    logger.info(
+        "SLACK ESCALATION: inquiry=%s vendor=%s (%s) reason=%s",
+        inquiry_id,
+        vendor_id,
+        vendor.get("company_en", ""),
+        reason,
+    )
+    # TODO Phase 4: Implement Slack notification via slack_sdk
+
+
+def _send_slack_draft_approval(
+    inquiry_id: str, vendor_id: str, vendor: dict, reply: dict, db
+) -> None:
+    """Send auto-reply draft to Slack for approval (stub — Phase 4)."""
+    logger.info(
+        "SLACK APPROVAL NEEDED: inquiry=%s vendor=%s (%s) confidence=%.2f",
+        inquiry_id,
+        vendor_id,
+        vendor.get("company_en", ""),
+        reply.get("confidence", 0),
+    )
+    # TODO Phase 4: Implement Slack approval flow
 
 
 @functions_framework.http
