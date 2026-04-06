@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFQ — China to Bangkok Freight Forwarding | GO Corporation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  :root {
+    --bg: #f7f8fb;
+    --surface: #ffffff;
+    --surface-2: #f0f2f7;
+    --border: #e2e5ee;
+    --border-accent: #2563eb;
+    --text: #1a1f36;
+    --text-muted: #5a6178;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --accent-dark: #1d4ed8;
+    --green: #059669;
+    --green-light: #d1fae5;
+    --orange: #d97706;
+    --orange-light: #fef3c7;
+    --red: #dc2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; min-height: 100vh; }
+
+  /* Print */
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    .no-print { display: none !important; }
+    .container { max-width: 100%; padding: 0; }
+    .section { break-inside: avoid; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); color: #fff; padding: 3rem 2rem 2.5rem; }
+  .header-inner { max-width: 900px; margin: 0 auto; }
+  .header-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 100px; margin-bottom: 1rem; }
+  .header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+  .header-sub { font-size: 1.05rem; opacity: 0.85; margin-bottom: 1.5rem; }
+  .header-meta { display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.85rem; opacity: 0.8; }
+  .header-meta strong { opacity: 1; color: #fff; }
+
+  /* Container */
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .card-accent { border-left: 4px solid var(--accent); }
+  .card-green { border-left: 4px solid var(--green); }
+  .card-orange { border-left: 4px solid var(--orange); }
+
+  /* Section */
+  .section { margin-bottom: 2.5rem; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 700; border-radius: 50%; margin-right: 0.6rem; flex-shrink: 0; }
+  .section-title { display: flex; align-items: center; font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
+  .section-label { display: flex; align-items: center; gap: 0.6rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: var(--surface-2); font-weight: 600; text-align: left; padding: 0.7rem 1rem; border-bottom: 2px solid var(--border); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+  td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .fill-cell { background: var(--accent-light); border: 1px dashed var(--accent); border-radius: 4px; min-width: 80px; text-align: center; color: var(--accent); font-weight: 500; font-size: 0.8rem; }
+
+  /* Lists */
+  ul { padding-left: 1.2rem; }
+  li { margin-bottom: 0.4rem; font-size: 0.9rem; color: var(--text-muted); }
+  li strong { color: var(--text); }
+
+  /* Quote box */
+  .quote-box { background: #f8fafc; border: 2px solid var(--accent); border-radius: 10px; padding: 1.5rem; margin: 1rem 0; }
+  .quote-box p { font-size: 0.9rem; margin-bottom: 0.3rem; }
+  .quote-box strong { color: var(--text); }
+
+  /* Contact card */
+  .contact-card { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: #fff; border-radius: 12px; padding: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .contact-card h3 { font-size: 1rem; margin-bottom: 0.8rem; grid-column: 1 / -1; }
+  .contact-item { font-size: 0.88rem; opacity: 0.9; }
+  .contact-item strong { display: block; opacity: 1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.72rem; font-weight: 600; }
+  .badge-blue { background: var(--accent-light); color: var(--accent); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .header h1 { font-size: 1.5rem; }
+    .header-meta { flex-direction: column; gap: 0.5rem; }
+    .contact-card { grid-template-columns: 1fr; }
+    .card { padding: 1.2rem; }
+  }
+
+  /* Download bar */
+  .download-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .download-bar span { font-size: 0.85rem; color: var(--text-muted); }
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--accent); color: #fff; font-size: 0.82rem; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 8px; border: none; cursor: pointer; text-decoration: none; }
+  .btn:hover { background: var(--accent-dark); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-badge">Request for Quotation</div>
+    <h1>China to Bangkok Freight Forwarding & Logistics</h1>
+    <p class="header-sub">GO Corporation Co., Ltd. is seeking qualified freight forwarding partners for consolidated door-to-door shipments from China to Bangkok, Thailand.</p>
+    <div class="header-meta">
+      <span><strong>Date:</strong> 5 April 2026</span>
+      <span><strong>Response by:</strong> 19 April 2026</span>
+      <span><strong>Ref:</strong> RFQ-GO-2026-04-FREIGHT</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Download bar -->
+  <div class="download-bar no-print">
+    <span>Save or share this RFQ document</span>
+    <button class="btn" onclick="window.print()">Print / Save PDF</button>
+  </div>
+
+  <!-- 1. Company Profile -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">1</span> Company Profile</div>
+    <div class="card card-accent">
+      <p style="font-size:0.92rem; color:var(--text-muted); margin-bottom:1rem;">
+        <strong style="color:var(--text);">GO Corporation Co., Ltd.</strong> is a Thai-based design, procurement, and project delivery company specializing in hospitality, commercial, and residential interior fit-out projects across Southeast Asia. We source a wide range of products from China and require a reliable freight forwarding partner for door-to-door delivery to Bangkok.
+      </p>
+      <table>
+        <tr><td style="width:220px;"><strong>Company</strong></td><td>GO Corporation Co., Ltd. (บริษัท จีโอ คอร์ปอเรชั่น จำกัด)</td></tr>
+        <tr><td><strong>Tax ID</strong></td><td>0105562096721</td></tr>
+        <tr><td><strong>Address</strong></td><td>11/2 P23 Tower, Unit 8A, Soi Sukhumvit 23, Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand</td></tr>
+        <tr><td><strong>Tel</strong></td><td>+66 2 124 5000</td></tr>
+        <tr><td><strong>Email</strong></td><td>contact@goco.bz / shipping@goco.bz</td></tr>
+        <tr><td><strong>Location</strong></td><td><a href="https://maps.app.goo.gl/oJ5Tu1CwxRLPiWJj8" target="_blank" style="color:var(--accent);">Google Maps</a></td></tr>
+      </table>
+      <table style="margin-top:1rem;">
+        <thead><tr><th colspan="2" style="text-align:left;">Shipping Volume & Profile</th></tr></thead>
+        <tr><td style="width:220px;"><strong>Volume (2024-2026)</strong></td><td>25+ purchase orders, ~480 CBM total</td></tr>
+        <tr><td><strong>Landed value shipped</strong></td><td>THB 2.6 million+</td></tr>
+        <tr><td><strong>Transport mix</strong></td><td>Land 80% / Sea 20%</td></tr>
+        <tr><td><strong>Projected annual volume</strong></td><td>200-400 CBM / year across 30-50 POs</td></tr>
+        <tr><td><strong>Trade term</strong></td><td>EXW (Ex Works) from factory</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. Goods Imported -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">2</span> Goods Typically Imported</div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Category</th><th>Examples</th><th>Origin Cities</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">Furniture</span></td><td>Tables, chairs, shelving, cabinets, custom millwork</td><td>Foshan, Shunde, Shenzhen</td></tr>
+          <tr><td><span class="badge badge-orange">Lighting</span></td><td>Chandeliers, pendants, LED panels, decorative luminaires</td><td>Zhongshan, Guangzhou, Foshan</td></tr>
+          <tr><td><span class="badge badge-green">Playground</span></td><td>Play towers, climbing structures, safety nets, rubber surfacing, water play</td><td>Chongqing, Hefei, Yiwu, Henan, Tianjin</td></tr>
+          <tr><td><span class="badge badge-blue">Construction</span></td><td>Aluminum doors/windows, steel structures, solid surface, flooring, panels</td><td>Foshan, Shandong, Guangzhou, Shanghai</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card" style="background:var(--surface-2);">
+      <p style="font-size:0.85rem; font-weight:600; margin-bottom:0.6rem; color:var(--text);">Typical Shipment Characteristics</p>
+      <ul>
+        <li><strong>Volume range:</strong> 0.05 CBM (small hardware) to 460+ CBM (large play structures)</li>
+        <li><strong>Common crate sizes:</strong> 100-300 cm in length; some oversized items exceed 250 cm</li>
+        <li><strong>Weight range:</strong> 20 kg to 2,000+ kg per shipment</li>
+        <li><strong>EXW value range:</strong> USD 300 to USD 7,000+ per PO</li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.6rem; color:var(--green);">FACTORY PICKUP LOCATIONS IN CHINA (74 ACTIVE VENDORS)</p>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem;">Our vendors are concentrated in Guangdong province, with additional suppliers across central and eastern China. Please confirm you can collect from all of these regions:</p>
+      <table>
+        <thead><tr><th>Region</th><th>Cities</th><th>Primary Product Categories</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Guangdong (primary)</strong></td><td>Foshan, Shunde, Shenzhen, Dongguan, Zhongshan, Guangzhou, Huizhou, Zhuhai</td><td>Furniture, lighting, building materials, playground</td></tr>
+          <tr><td><strong>Zhejiang</strong></td><td>Yiwu, Wenzhou, Hangzhou</td><td>Sports equipment, playground accessories</td></tr>
+          <tr><td><strong>Central China</strong></td><td>Chongqing, Hefei, Henan, Shandong</td><td>Climbing holds, rubber flooring, construction materials</td></tr>
+          <tr><td><strong>Northern / Eastern</strong></td><td>Shanghai, Tianjin, Qingdao</td><td>Safety nets, rubber surfacing, large play structures</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. Services & Rates Required -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">3</span> Services & Rates Required</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Please provide rates and transit times for all available options. For each mode, specify the rate structure, billing rule (e.g., charge higher of CBM or KGS), minimum charge, and any surcharges (fuel, oversized, peak season).</p>
+
+    <div class="card card-accent">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent);">Table A &mdash; Door-to-Door (Factory Pickup to Bangkok Delivery)</p>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.8rem;">All-inclusive: factory pickup, consolidation, freight, customs clearance, import duty, VAT, and last-mile delivery to Bangkok.</p>
+      <table>
+        <thead>
+          <tr><th>Mode</th><th>Per CBM (THB)</th><th>Per KG (THB)</th><th>Min Charge</th><th>Transit (days)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Sea LCL</strong></td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>Land (road)</strong></td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>FCL 20'</strong></td><td colspan="2" class="fill-cell">______ per container</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>FCL 40'</strong></td><td colspan="2" class="fill-cell">______ per container</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>FCL 40'HC</strong></td><td colspan="2" class="fill-cell">______ per container</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card card-orange">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--orange);">Table B &mdash; EXW Terms (Freight Only, Excluding Duty &amp; VAT)</p>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.8rem;">Freight charges only: factory pickup, consolidation, freight to Bangkok port/warehouse. Customs clearance, import duty, and VAT billed separately or handled by buyer.</p>
+      <table>
+        <thead>
+          <tr><th>Mode</th><th>Per CBM (THB)</th><th>Per KG (THB)</th><th>Min Charge</th><th>Transit (days)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Sea LCL</strong></td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>Land (road)</strong></td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>FCL 20'</strong></td><td colspan="2" class="fill-cell">______ per container</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>FCL 40'</strong></td><td colspan="2" class="fill-cell">______ per container</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+          <tr><td><strong>FCL 40'HC</strong></td><td colspan="2" class="fill-cell">______ per container</td><td class="fill-cell">______</td><td class="fill-cell">______</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.6rem;">If customs clearance is offered separately, please also quote: clearance service fee (THB per shipment), and whether you can confirm HS codes and check import permit requirements.</p>
+    </div>
+
+    <div class="card" style="background:var(--surface-2);">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.4rem; color:var(--text);">Factory Pickup Surcharges by Region</p>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.8rem;">Most of our suppliers are in Guangdong. Please indicate if there is an additional factory-to-warehouse/port pickup charge for other provinces:</p>
+      <table>
+        <thead><tr><th>Pickup Region</th><th>Surcharge (THB or CNY)</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Guangdong (Foshan, Shenzhen, Zhongshan, Dongguan)</td><td class="fill-cell">______</td><td>Primary region</td></tr>
+          <tr><td>Zhejiang (Yiwu, Wenzhou)</td><td class="fill-cell">______</td><td></td></tr>
+          <tr><td>Chongqing / Hefei / Henan / Shandong</td><td class="fill-cell">______</td><td>Central China</td></tr>
+          <tr><td>Shanghai / Tianjin / Qingdao</td><td class="fill-cell">______</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <p style="font-size:0.85rem; font-weight:600; margin-bottom:0.6rem;">Please also specify:</p>
+      <ul>
+        <li><strong>Billing rule:</strong> How is chargeable weight/volume determined? (e.g., higher of CBM vs KGS)</li>
+        <li><strong>Oversized surcharge:</strong> For items exceeding 250 cm in any dimension</li>
+        <li><strong>Fuel surcharge:</strong> Current rate and adjustment frequency</li>
+        <li><strong>Peak season surcharge:</strong> If applicable, when and how much</li>
+        <li><strong>Last-mile delivery in Bangkok:</strong> Cost for standard 4-wheel truck vs 6-wheel truck (oversized items)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 4. Insurance -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">4</span> Insurance Coverage</div>
+    <div class="card card-orange">
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Please describe your cargo insurance offering:</p>
+      <ul>
+        <li><strong>Coverage type:</strong> All-risk, named perils, or other?</li>
+        <li><strong>Insured value basis:</strong> CIF x 110%, invoice value, or other?</li>
+        <li><strong>Premium rate:</strong> Percentage of insured value</li>
+        <li><strong>Minimum premium:</strong> If any</li>
+        <li><strong>Underwriter:</strong> (e.g., Chubb, AXA, Ping An)</li>
+        <li><strong>Claim process:</strong> How are claims filed? Typical settlement timeline?</li>
+        <li><strong>Exclusions:</strong> Any notable exclusions (glass, fragile items, playground equipment)?</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 5. Customs -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">5</span> Customs & Import Clearance</div>
+    <div class="card">
+      <ul>
+        <li>Do you handle <strong>Thai customs clearance</strong> as part of the service?</li>
+        <li><strong>Clearance service fee</strong> (separate from duty/tax): THB _____ per shipment</li>
+        <li>Can you <strong>confirm HS codes</strong> and import duty rates before shipment?</li>
+        <li>Do you check for <strong>import permit requirements</strong>?</li>
+      </ul>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:1rem;">Common HS codes we import under:</p>
+      <table style="margin-top:0.5rem;">
+        <thead><tr><th>HS Code</th><th>Description</th><th>Duty Rate</th></tr></thead>
+        <tbody>
+          <tr><td><strong>9403</strong></td><td>Furniture (chairs, tables, shelving)</td><td>20%</td></tr>
+          <tr><td><strong>7610</strong></td><td>Aluminum structures, doors, windows</td><td>10%</td></tr>
+          <tr><td><strong>9405</strong></td><td>Lighting fixtures / luminaires</td><td>20%</td></tr>
+          <tr><td><strong>7308</strong></td><td>Iron/steel structures, doors</td><td>10%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. Warehouse -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">6</span> Warehouse Services</div>
+
+    <div class="card card-green">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.6rem; color:var(--green);">ORIGIN WAREHOUSE (CHINA)</p>
+      <ul>
+        <li><strong>Location:</strong> City, full address</li>
+        <li><strong>Consolidation service:</strong> Can multiple factory shipments be consolidated before dispatch?</li>
+        <li><strong>Free storage period:</strong> _____ days</li>
+        <li><strong>Storage fee after free period:</strong> THB/CBM/day or CNY/CBM/day</li>
+        <li><strong>Value-added services:</strong> Quality inspection, photo documentation, repacking, labeling?</li>
+        <li><strong>Receiving contact:</strong> Name, phone, WeChat for factory coordination</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.6rem; color:var(--text-muted);">DESTINATION WAREHOUSE (BANGKOK, IF APPLICABLE)</p>
+      <ul>
+        <li><strong>Location:</strong> City, full address</li>
+        <li><strong>Free storage period:</strong> _____ days</li>
+        <li><strong>Storage fee after free period:</strong> THB/CBM/day</li>
+        <li><strong>Cross-docking or direct delivery available?</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 7. Communication & Technology -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">7</span> Communication & Technology</div>
+    <div class="card">
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">We manage shipping operations digitally and value agents who support modern communication and integration.</p>
+      <table>
+        <thead><tr><th>Requirement</th><th>Your Response</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Primary communication</strong></td><td>WeChat and/or Email (mandatory)</td></tr>
+          <tr><td><strong>Tracking system</strong></td><td>Do you provide online tracking? (URL / app?)</td></tr>
+          <tr><td><strong>Order management portal</strong></td><td>Web portal for booking, tracking, document download?</td></tr>
+          <tr><td><strong>API accessibility</strong></td><td>REST API, webhook for shipment status updates, EDI?</td></tr>
+          <tr><td><strong>Document delivery</strong></td><td>How are BL, invoices, packing lists delivered? (email / portal / API)</td></tr>
+          <tr><td><strong>Language support</strong></td><td>Chinese + English (mandatory); Thai is a plus</td></tr>
+          <tr><td><strong>Response time SLA</strong></td><td>Typical turnaround for quote requests and status inquiries?</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 8. Payment Terms -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">8</span> Payment Terms & Conditions</div>
+    <div class="card">
+      <ul>
+        <li><strong>Payment terms:</strong> (e.g., 30 days from delivery, COD, prepaid, monthly settlement)</li>
+        <li><strong>Accepted payment methods:</strong> Bank transfer (THB/CNY/USD), credit terms, other</li>
+        <li><strong>Credit terms available?</strong> If yes, credit period and credit limit for new customers?</li>
+        <li><strong>Currency of invoicing:</strong> THB, CNY, or USD?</li>
+        <li><strong>Late payment penalty or surcharge?</strong></li>
+        <li><strong>Deposit or advance required for first shipment?</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 9. Benchmark -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">9</span> Reference Shipment for Benchmarking</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">To compare quotes directly, please provide pricing for the following actual shipment:</p>
+    <div class="quote-box">
+      <p><strong>Product:</strong> ED 70 Aluminum Folding Door (HS 7610)</p>
+      <p><strong>Origin:</strong> EXW Foshan, Guangdong, China</p>
+      <p><strong>Destination:</strong> Bangkok, Thailand (door-to-door)</p>
+      <p><strong>Crate dimensions:</strong> 285 x 30 x 280 cm <span class="badge badge-blue">2.394 CBM</span></p>
+      <p><strong>Gross weight:</strong> 120 kg</p>
+      <p><strong>Declared value:</strong> USD 4,500 (EXW)</p>
+      <p><strong>Mode requested:</strong> Sea LCL and Land (please quote both)</p>
+    </div>
+    <div class="card card-accent">
+      <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.6rem; color:var(--accent);">PLEASE PROVIDE FOR THIS SHIPMENT (BOTH TERMS):</p>
+      <table>
+        <thead><tr><th style="width:250px;">Cost Component</th><th>Door-to-Door (all-in)</th><th>EXW (freight only)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Sea LCL freight</strong></td><td class="fill-cell">THB ______</td><td class="fill-cell">THB ______</td></tr>
+          <tr><td><strong>Land freight</strong></td><td class="fill-cell">THB ______</td><td class="fill-cell">THB ______</td></tr>
+          <tr><td><strong>Factory pickup (Foshan)</strong></td><td class="fill-cell">THB ______</td><td class="fill-cell">THB ______</td></tr>
+          <tr><td><strong>Last-mile delivery Bangkok</strong></td><td class="fill-cell">THB ______ (6-wheel truck)</td><td class="fill-cell">THB ______</td></tr>
+          <tr><td><strong>Customs clearance fee</strong></td><td style="font-size:0.82rem; color:var(--text-muted);">Included</td><td class="fill-cell">THB ______</td></tr>
+          <tr><td><strong>Insurance premium</strong></td><td class="fill-cell">THB ______</td><td class="fill-cell">THB ______</td></tr>
+          <tr><td style="background:var(--accent-light);"><strong>Total cost</strong></td><td class="fill-cell" style="font-weight:700;">THB ______</td><td class="fill-cell" style="font-weight:700;">THB ______</td></tr>
+          <tr><td><strong>Estimated transit time</strong></td><td class="fill-cell">______ days</td><td class="fill-cell">______ days</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 10. Additional Questions -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">10</span> Additional Questions</div>
+    <div class="card">
+      <ol style="padding-left:1.2rem;">
+        <li style="margin-bottom:0.5rem;">What is your <strong>minimum shipment size</strong> (CBM or KG)?</li>
+        <li style="margin-bottom:0.5rem;">Do you handle <strong>oversized or overweight cargo</strong>? Any surcharges?</li>
+        <li style="margin-bottom:0.5rem;">Can you provide <strong>consolidated monthly invoicing</strong>?</li>
+        <li style="margin-bottom:0.5rem;">What is your <strong>claims resolution process</strong> and average settlement time?</li>
+        <li style="margin-bottom:0.5rem;">Do you have <strong>references from Thai importers</strong> in the furniture/construction industry?</li>
+        <li style="margin-bottom:0.5rem;">Are there <strong>volume discount tiers</strong>? If so, at what annual CBM thresholds?</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 11. Contact & Response -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">11</span> How to Respond</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Please send your complete quotation and company profile to:</p>
+
+    <div class="contact-card">
+      <h3>GO Corporation Co., Ltd. (บริษัท จีโอ คอร์ปอเรชั่น จำกัด)</h3>
+      <div class="contact-item">
+        <strong>Contact Person</strong>
+        Eukrit Kraikosol
+      </div>
+      <div class="contact-item">
+        <strong>Email</strong>
+        eukrit@goco.bz
+      </div>
+      <div class="contact-item">
+        <strong>Phone</strong>
+        +66 61 491 6393
+      </div>
+      <div class="contact-item">
+        <strong>WeChat</strong>
+        eukrit
+      </div>
+      <div class="contact-item" style="grid-column: 1 / -1;">
+        <strong>Office Address</strong>
+        11/2 P23 Tower, Unit 8A, Soi Sukhumvit 23, Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand
+      </div>
+      <div class="contact-item">
+        <strong>Office Tel</strong>
+        +66 2 124 5000
+      </div>
+      <div class="contact-item">
+        <strong>Tax ID</strong>
+        0105562096721
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem; background:var(--orange-light); border-color:var(--orange);">
+      <p style="font-size:0.9rem; color:var(--orange); font-weight:700;">Response Deadline: 19 April 2026</p>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.3rem;">We look forward to exploring a partnership. Please do not hesitate to contact us for any clarification.</p>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding:2rem 0; color:var(--text-muted); font-size:0.8rem; border-top:1px solid var(--border); margin-top:2rem;">
+    GO Corporation Co., Ltd. &mdash; RFQ-GO-2026-04-FREIGHT &mdash; 5 April 2026
+  </div>
+
+</div>
+</body>
+</html>
