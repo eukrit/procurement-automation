@@ -13,9 +13,37 @@ import json
 import logging
 import os
 
+import re
+
 from google import genai
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_json_parse(text: str) -> dict | None:
+    """Try to parse JSON, with fallback cleanup for common Gemini issues."""
+    # First try direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Strip markdown fences if present
+    cleaned = re.sub(r"^```json\s*", "", text.strip())
+    cleaned = re.sub(r"\s*```$", "", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Try fixing trailing commas before } or ]
+    cleaned = re.sub(r",\s*([}\]])", r"\1", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    return None
 
 # ── Config ────────────────────────────────────────────────────
 
@@ -26,11 +54,27 @@ GEMINI_ENABLED = os.environ.get("GEMINI_ENABLED", "true").lower() == "true"
 
 _client = None
 
+SA_KEY_FILE = os.environ.get(
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    os.path.join(os.path.dirname(__file__), "..", "..", "ai-agents-go-4c81b70995db.json"),
+)
+
 
 def _get_client():
     global _client
     if _client is None:
-        _client = genai.Client(project=GCP_PROJECT, location=GEMINI_LOCATION)
+        if os.path.exists(SA_KEY_FILE):
+            _client = genai.Client(
+                vertexai=True,
+                project=GCP_PROJECT,
+                location=GEMINI_LOCATION,
+            )
+        else:
+            _client = genai.Client(
+                vertexai=True,
+                project=GCP_PROJECT,
+                location=GEMINI_LOCATION,
+            )
     return _client
 
 
@@ -121,12 +165,15 @@ def classify_vendor_response(
             contents=[prompt],
             config=genai.types.GenerateContentConfig(
                 temperature=0.0,
-                max_output_tokens=1024,
+                max_output_tokens=2048,
                 response_mime_type="application/json",
                 system_instruction=CLASSIFY_SYSTEM_PROMPT,
             ),
         )
-        result = json.loads(response.text)
+        result = _safe_json_parse(response.text)
+        if result is None:
+            logger.warning("Failed to parse classify JSON, raw: %s", response.text[:200])
+            raise ValueError("Malformed JSON from Gemini classify")
         logger.info(
             "Classified email from %s: intent=%s confidence=%.2f",
             sender,
@@ -264,7 +311,10 @@ def extract_vendor_rates(
                 system_instruction=EXTRACT_SYSTEM_PROMPT,
             ),
         )
-        result = json.loads(response.text)
+        result = _safe_json_parse(response.text)
+        if result is None:
+            logger.warning("Failed to parse extract JSON, raw: %s", response.text[:200])
+            raise ValueError("Malformed JSON from Gemini extract")
         logger.info(
             "Extracted rates from %s: confidence=%.2f missing=%d",
             vendor_company,
@@ -392,12 +442,18 @@ def generate_auto_reply(
             contents=[prompt],
             config=genai.types.GenerateContentConfig(
                 temperature=0.0,
-                max_output_tokens=2048,
+                max_output_tokens=4096,
                 response_mime_type="application/json",
                 system_instruction=AUTO_REPLY_SYSTEM_PROMPT,
             ),
         )
-        result = json.loads(response.text)
+        raw_text = response.text
+        result = _safe_json_parse(raw_text)
+        if result is None:
+            # Gemini sometimes produces malformed JSON with unescaped HTML.
+            # Fall back to regex extraction.
+            result = _repair_auto_reply_json(raw_text)
+
         logger.info(
             "Generated auto-reply for %s: confidence=%.2f escalate=%s",
             vendor_company,
@@ -417,3 +473,51 @@ def generate_auto_reply(
             "answers_given": [],
             "info_requested": [],
         }
+
+
+def _repair_auto_reply_json(raw: str) -> dict:
+    """Attempt to repair malformed JSON from Gemini auto-reply output."""
+    import re
+
+    result = {
+        "subject": "",
+        "body_html": "",
+        "body_language": "en",
+        "confidence": 0.0,
+        "should_escalate": False,
+        "escalation_reason": None,
+        "answers_given": [],
+        "info_requested": [],
+    }
+
+    # Extract subject
+    m = re.search(r'"subject"\s*:\s*"((?:[^"\\]|\\.)*)"', raw)
+    if m:
+        result["subject"] = m.group(1)
+
+    # Extract body_html — grab everything between "body_html": " and the next known key
+    m = re.search(
+        r'"body_html"\s*:\s*"(.*?)",\s*"body_language"',
+        raw,
+        re.DOTALL,
+    )
+    if m:
+        result["body_html"] = m.group(1).replace('\\"', '"').replace("\\n", "\n")
+
+    # Extract confidence
+    m = re.search(r'"confidence"\s*:\s*([\d.]+)', raw)
+    if m:
+        result["confidence"] = float(m.group(1))
+
+    # Extract should_escalate
+    m = re.search(r'"should_escalate"\s*:\s*(true|false)', raw, re.IGNORECASE)
+    if m:
+        result["should_escalate"] = m.group(1).lower() == "true"
+
+    # Extract body_language
+    m = re.search(r'"body_language"\s*:\s*"(\w+)"', raw)
+    if m:
+        result["body_language"] = m.group(1)
+
+    logger.info("Repaired malformed auto-reply JSON (confidence=%.2f)", result["confidence"])
+    return result
