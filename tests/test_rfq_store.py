@@ -67,7 +67,7 @@ class FakeCollectionRef:
             self._docs[doc_id] = FakeDocRef(doc_id)
         return self._docs[doc_id]
 
-    def where(self, field, op, value):
+    def where(self, field=None, op=None, value=None, *, filter=None):
         # Return self for chaining — stream will return all docs
         return self
 

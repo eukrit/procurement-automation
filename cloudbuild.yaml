@@ -1,0 +1,53 @@
+steps:
+  # Service 1: Send RFQ (HTTP trigger)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - send-rfq
+      - --gen2
+      - --runtime=python312
+      - --region=us-central1
+      - --source=.
+      - --entry-point=send_rfq
+      - --trigger-http
+      - --allow-unauthenticated
+      - --memory=512Mi
+      - --timeout=300s
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz
+
+  # Service 2: Process inbound emails (Pub/Sub) — Phase 3
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - process-procurement-email
+      - --gen2
+      - --runtime=python312
+      - --region=us-central1
+      - --source=.
+      - --entry-point=process_procurement_email
+      - --trigger-topic=gmail-procurement-watch
+      - --memory=512Mi
+      - --timeout=120s
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true
+
+  # Service 3: Reminder cron (HTTP, invoked by Cloud Scheduler) — Phase 4
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - rfq-reminder-cron
+      - --gen2
+      - --runtime=python312
+      - --region=us-central1
+      - --source=.
+      - --entry-point=rfq_reminder_cron
+      - --trigger-http
+      - --allow-unauthenticated
+      - --memory=256Mi
+      - --timeout=120s
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,SLACK_CHANNEL=C08VD9PRSCU

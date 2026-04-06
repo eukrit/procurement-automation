@@ -17,6 +17,7 @@ import re
 from datetime import datetime, timezone
 
 from google.cloud import firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 GCP_PROJECT = os.environ.get("GCP_PROJECT", "ai-agents-go")
 FIRESTORE_DATABASE = os.environ.get("FIRESTORE_DATABASE", "procurement-automation")
@@ -88,7 +89,7 @@ def list_inquiries(
     db = db or get_db()
     query = db.collection(INQUIRIES)
     if status:
-        query = query.where("status", "==", status)
+        query = query.where(filter=FieldFilter("status", "==", status))
     return [doc.to_dict() for doc in query.stream()]
 
 
@@ -192,7 +193,7 @@ def get_inquiry_vendors(
         db.collection(INQUIRIES).document(inquiry_id).collection("vendors")
     )
     if status_filter:
-        query = query.where("status", "==", status_filter)
+        query = query.where(filter=FieldFilter("status", "==", status_filter))
     return [doc.to_dict() for doc in query.stream()]
 
 
@@ -317,7 +318,7 @@ def match_sender_to_vendor(
 
     # Search active inquiries
     inquiries = db.collection(INQUIRIES).where(
-        "status", "in", ["sending", "active"]
+        filter=FieldFilter("status", "in", ["sending", "active"])
     ).stream()
 
     for inq_doc in inquiries:
