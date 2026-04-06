@@ -42,6 +42,20 @@ from src.parsers.rfq_gemini import (
     extract_vendor_rates,
     generate_auto_reply,
 )
+from src.rfq_workflow import (
+    should_auto_reply,
+    check_rate_anomaly,
+    process_reminders,
+)
+from src.slack_notifier import (
+    notify_new_response,
+    notify_escalation,
+    notify_auto_reply_sent,
+    notify_draft_for_approval,
+    notify_rate_anomaly,
+    notify_reminder_summary,
+)
+from src.rfq_store import list_inquiries
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -364,6 +378,31 @@ def _handle_rate_quote(
         "responded_count": _count_responded(inquiry_id, db),
     })
 
+    # Slack notification for new response
+    try:
+        notify_new_response(
+            inquiry_id=inquiry_id,
+            vendor_id=vendor_id,
+            vendor_name=vendor.get("company_en", vendor_id),
+            intent=classification.get("intent", "rate_quote"),
+            summary=classification.get("summary", ""),
+            confidence=classification.get("confidence", 0),
+        )
+    except Exception as e:
+        logger.error("Slack notify_new_response failed: %s", e)
+
+    # Check rate anomalies vs baseline
+    if extraction.get("rates"):
+        baseline = inquiry.get("scoring_config", {}).get("baseline", {})
+        if baseline:
+            anomalies = check_rate_anomaly(extraction["rates"], baseline)
+            if anomalies:
+                logger.warning("Rate anomalies for %s: %s", vendor_id, anomalies)
+                try:
+                    notify_rate_anomaly(inquiry_id, vendor_id, vendor.get("company_en", ""), anomalies)
+                except Exception as e:
+                    logger.error("Slack rate anomaly notify failed: %s", e)
+
     # If there are still questions or missing fields, optionally auto-reply
     if missing or classification.get("questions_from_vendor"):
         _handle_questions_or_missing(inquiry_id, vendor_id, inquiry, vendor, body_text, msg, classification, db)
@@ -466,6 +505,17 @@ def _handle_questions_or_missing(
 
             logger.info("Auto-reply sent to %s (confidence=%.2f)", vendor_id, reply_confidence)
 
+            try:
+                notify_auto_reply_sent(
+                    inquiry_id=inquiry_id,
+                    vendor_id=vendor_id,
+                    vendor_name=vendor.get("company_en", vendor_id),
+                    confidence=reply_confidence,
+                    answers=reply.get("answers_given"),
+                )
+            except Exception as e:
+                logger.error("Slack auto-reply notify failed: %s", e)
+
         except Exception as e:
             logger.error("Failed to send auto-reply to %s: %s", vendor_id, e)
 
@@ -506,36 +556,120 @@ def _intent_to_message_type(intent: str) -> str:
 def _send_slack_escalation(
     inquiry_id: str, vendor_id: str, vendor: dict, reason: str, db
 ) -> None:
-    """Send a Slack notification for escalation (stub — Phase 4 will add full Slack)."""
+    """Send a Slack notification for escalation."""
     logger.info(
         "SLACK ESCALATION: inquiry=%s vendor=%s (%s) reason=%s",
-        inquiry_id,
-        vendor_id,
-        vendor.get("company_en", ""),
-        reason,
+        inquiry_id, vendor_id, vendor.get("company_en", ""), reason,
     )
-    # TODO Phase 4: Implement Slack notification via slack_sdk
+    try:
+        notify_escalation(
+            inquiry_id=inquiry_id,
+            vendor_id=vendor_id,
+            vendor_name=vendor.get("company_en", vendor_id),
+            reason=reason,
+            vendor_contacts={
+                "contact_email": vendor.get("contact_email"),
+                "contact_wechat": vendor.get("contact_wechat"),
+                "contact_whatsapp": vendor.get("contact_whatsapp"),
+                "contact_phone": vendor.get("contact_phone"),
+            },
+        )
+    except Exception as e:
+        logger.error("Slack escalation failed: %s", e)
 
 
 def _send_slack_draft_approval(
     inquiry_id: str, vendor_id: str, vendor: dict, reply: dict, db
 ) -> None:
-    """Send auto-reply draft to Slack for approval (stub — Phase 4)."""
+    """Send auto-reply draft to Slack for human approval."""
     logger.info(
         "SLACK APPROVAL NEEDED: inquiry=%s vendor=%s (%s) confidence=%.2f",
-        inquiry_id,
-        vendor_id,
-        vendor.get("company_en", ""),
-        reply.get("confidence", 0),
+        inquiry_id, vendor_id, vendor.get("company_en", ""), reply.get("confidence", 0),
     )
-    # TODO Phase 4: Implement Slack approval flow
+    try:
+        from src.gmail_reader import strip_html as _strip
+        body_preview = _strip(reply.get("body_html", ""))[:500]
+        notify_draft_for_approval(
+            inquiry_id=inquiry_id,
+            vendor_id=vendor_id,
+            vendor_name=vendor.get("company_en", vendor_id),
+            draft_subject=reply.get("subject", ""),
+            draft_body_preview=body_preview,
+            confidence=reply.get("confidence", 0),
+        )
+    except Exception as e:
+        logger.error("Slack draft approval failed: %s", e)
 
 
 @functions_framework.http
 def rfq_reminder_cron(request: Request):
     """HTTP trigger from Cloud Scheduler — daily reminder check.
 
-    Phase 4 implementation. Currently a stub.
+    Runs daily at 09:00 Bangkok (02:00 UTC).
+    For each active inquiry:
+      - Day 5: Send reminder 1
+      - Day 7: Send reminder 2 (mention WeChat/WhatsApp)
+      - Day 10: Escalate to Slack
+      - Post-deadline + 3 days: Close non-responsive vendors
+
+    Query params / JSON body:
+        inquiry_id (optional): Process a specific inquiry. If omitted, processes all active.
+        dry_run (optional): If true, preview without sending.
     """
-    logger.info("rfq_reminder_cron triggered — Phase 4 stub")
-    return {"status": "ok", "message": "Phase 4 stub"}, 200
+    logger.info("rfq_reminder_cron triggered")
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = {}
+
+    inquiry_id = data.get("inquiry_id") or request.args.get("inquiry_id")
+    dry_run = data.get("dry_run", False)
+
+    db = get_db()
+
+    # Get target inquiries
+    if inquiry_id:
+        inquiry_ids = [inquiry_id]
+    else:
+        # Process all active/sending inquiries
+        active = list_inquiries(status="active", db=db)
+        sending = list_inquiries(status="sending", db=db)
+        inquiry_ids = [
+            inq.get("inquiry_id") for inq in active + sending
+            if inq.get("inquiry_id")
+        ]
+
+    if not inquiry_ids:
+        return {"status": "ok", "message": "No active inquiries"}, 200
+
+    all_summaries = []
+    for inq_id in inquiry_ids:
+        summary = process_reminders(inq_id, dry_run=dry_run, db=db)
+        all_summaries.append(summary)
+
+        # Post Slack summary if any actions taken
+        if not dry_run:
+            try:
+                notify_reminder_summary(inq_id, summary)
+            except Exception as e:
+                logger.error("Slack reminder summary failed for %s: %s", inq_id, e)
+
+    total_actions = sum(
+        s.get("reminder_1_sent", 0) + s.get("reminder_2_sent", 0) +
+        s.get("escalated", 0) + s.get("closed", 0)
+        for s in all_summaries
+    )
+
+    logger.info(
+        "Reminder cron complete: %d inquiries processed, %d actions taken, dry_run=%s",
+        len(inquiry_ids), total_actions, dry_run,
+    )
+
+    return {
+        "status": "ok",
+        "dry_run": dry_run,
+        "inquiries_processed": len(inquiry_ids),
+        "total_actions": total_actions,
+        "summaries": all_summaries,
+    }, 200
