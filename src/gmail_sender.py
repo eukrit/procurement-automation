@@ -17,8 +17,7 @@ from email.mime.text import MIMEText
 from email import encoders
 from pathlib import Path
 
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
+from src.gmail_auth import build_gmail_service
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +25,6 @@ logger = logging.getLogger(__name__)
 
 GCP_PROJECT = os.environ.get("GCP_PROJECT", "ai-agents-go")
 IMPERSONATE_USER = os.environ.get("IMPERSONATE_USER", "eukrit@goco.bz")
-
-# Service account key — local dev uses file, Cloud Functions uses default creds
-SA_KEY_FILE = os.environ.get(
-    "GOOGLE_APPLICATION_CREDENTIALS",
-    os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "ai-agents-go-4c81b70995db.json",
-    ),
-)
 
 GMAIL_SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
@@ -58,20 +47,7 @@ def get_gmail_send_service(impersonate_user: str | None = None):
     Returns:
         Gmail API service resource.
     """
-    user = impersonate_user or IMPERSONATE_USER
-
-    if os.path.exists(SA_KEY_FILE):
-        credentials = service_account.Credentials.from_service_account_file(
-            SA_KEY_FILE, scopes=GMAIL_SCOPES
-        )
-    else:
-        # On Cloud Functions, use default credentials
-        import google.auth
-
-        credentials, _ = google.auth.default(scopes=GMAIL_SCOPES)
-
-    delegated = credentials.with_subject(user)
-    return build("gmail", "v1", credentials=delegated, cache_discovery=False)
+    return build_gmail_service(GMAIL_SCOPES, impersonate_user=impersonate_user)
 
 
 # ── Core Send ─────────────────────────────────────────────────

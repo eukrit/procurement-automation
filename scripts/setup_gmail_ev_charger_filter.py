@@ -31,21 +31,15 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from src.gmail_auth import build_gmail_service
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 GCP_PROJECT = os.environ.get("GCP_PROJECT", "ai-agents-go")
 IMPERSONATE_USER = os.environ.get("IMPERSONATE_USER", "eukrit@goco.bz")
-SA_KEY_FILE = os.environ.get(
-    "GOOGLE_APPLICATION_CREDENTIALS",
-    os.path.join(
-        os.path.dirname(__file__), "..", "ai-agents-go-4c81b70995db.json"
-    ),
-)
 
 LABEL_NAME = "Suppliers/EV Charger"
 DATA_FILE = os.path.join(
@@ -60,15 +54,7 @@ SCOPES = [
 
 def get_gmail_admin_service():
     """Build Gmail service with labels + settings scopes."""
-    if os.path.exists(SA_KEY_FILE):
-        credentials = service_account.Credentials.from_service_account_file(
-            SA_KEY_FILE, scopes=SCOPES
-        )
-    else:
-        import google.auth
-        credentials, _ = google.auth.default(scopes=SCOPES)
-    delegated = credentials.with_subject(IMPERSONATE_USER)
-    return build("gmail", "v1", credentials=delegated, cache_discovery=False)
+    return build_gmail_service(SCOPES)
 
 
 def collect_vendor_emails() -> list[str]:
