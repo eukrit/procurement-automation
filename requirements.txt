@@ -1,5 +1,6 @@
-# Core
+# Core — Cloud Functions
 google-cloud-firestore>=2.16.0
+google-cloud-secret-manager>=2.18.0
 google-auth>=2.29.0
 google-api-python-client>=2.120.0
 google-genai>=1.0.0
@@ -7,11 +8,6 @@ functions-framework>=3.5.0
 
 # Slack
 slack-sdk>=3.27.0
-
-# MCP Server
-mcp>=1.0.0
-starlette>=0.36.0
-uvicorn>=0.27.0
 
 # Testing
 pytest>=8.0.0
