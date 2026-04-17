@@ -223,36 +223,56 @@ Email body:
 ---
 {attachment_section}
 
+IMPORTANT: Identify the trade term the vendor is quoting under. Common trade terms:
+- DDP (Delivered Duty Paid): all-inclusive — warehouse, freight, customs, taxes, last-mile delivery
+- DDU (Delivered Duty Unpaid): freight + delivery but buyer pays customs/taxes
+- D2D (Door-to-Door consolidated): freight + last-mile, may or may not include customs
+- EXW (Ex Works): pickup from factory, buyer arranges everything
+- FOB (Free on Board): seller delivers to port, buyer arranges sea freight onward
+- CIF (Cost, Insurance, Freight): seller pays freight + insurance to destination port
+
 Extract and return JSON matching this schema:
 {{
+  "trade_term": "DDP" or "DDU" or "D2D" or "EXW" or "FOB" or "CIF" or "other",
+  "trade_term_notes": "what exactly is included in the quoted price",
   "rates": {{
-    "d2d_sea_lcl_per_cbm": number or null (THB/CBM door-to-door sea LCL),
-    "d2d_sea_lcl_per_kg": number or null (THB/KG door-to-door sea LCL),
-    "d2d_land_per_cbm": number or null (THB/CBM door-to-door land),
-    "d2d_land_per_kg": number or null (THB/KG door-to-door land),
-    "exw_sea_lcl_per_cbm": number or null (THB/CBM EXW sea LCL),
-    "exw_sea_lcl_per_kg": number or null (THB/KG EXW sea LCL),
-    "exw_land_per_cbm": number or null (THB/CBM EXW land),
-    "exw_land_per_kg": number or null (THB/KG EXW land),
-    "d2d_fcl_20": number or null (THB per 20ft container D2D),
-    "d2d_fcl_40": number or null (THB per 40ft container D2D),
-    "d2d_fcl_40hc": number or null (THB per 40HC container D2D),
+    "sea_lcl_per_cbm": number or null (THB/CBM),
+    "sea_lcl_per_kg": number or null (THB/KG),
+    "land_per_cbm": number or null (THB/CBM),
+    "land_per_kg": number or null (THB/KG),
+    "fcl_20": number or null (THB per 20ft container),
+    "fcl_40": number or null (THB per 40ft container),
+    "fcl_40hc": number or null (THB per 40HC container),
     "transit_sea_days": number or null,
     "transit_land_days": number or null,
     "min_charge": number or null (THB minimum charge),
-    "last_mile_standard": number or null (THB standard Bangkok delivery),
-    "last_mile_oversized": number or null (THB oversized delivery),
     "billing_rule": string or null (e.g. "charge the higher of CBM or KG"),
     "insurance_rate": string or null,
     "payment_terms": string or null,
     "currency": string (original currency quoted, e.g. "THB", "CNY", "USD"),
-    "fx_rate_used": number or null (if conversion was needed),
-    "pickup_surcharges": {{}} or null (any origin pickup fees)
+    "fx_rate_used": number or null (if conversion was needed)
+  }},
+  "includes": {{
+    "china_warehouse": true/false/null,
+    "china_pickup": true/false/null,
+    "freight": true/false/null,
+    "customs_china": true/false/null,
+    "customs_thailand": true/false/null,
+    "import_taxes": true/false/null,
+    "last_mile_delivery": true/false/null,
+    "cargo_insurance": true/false/null
+  }},
+  "surcharges": {{
+    "last_mile_standard": number or null (THB, if charged separately),
+    "last_mile_oversized": number or null (THB),
+    "pickup_fee": number or null (THB, if charged separately),
+    "sensitive_goods_surcharge": number or null (THB/CBM or description),
+    "oversized_surcharge": string or null
   }},
   "capabilities": {{
     "warehouse_china": true/false/null,
     "warehouse_bangkok": true/false/null,
-    "customs_clearance": true/false/null,
+    "customs_clearance": true/false/null (double clearance CN+TH?),
     "cargo_insurance": true/false/null,
     "api_tracking": true/false/null,
     "wechat_support": true/false/null,
@@ -264,7 +284,7 @@ Extract and return JSON matching this schema:
   "confidence": 0.0-1.0 (how complete and reliable is this extraction?)
 }}
 
-Our baseline rates (Gift Somlak 2025):
+Our baseline rates (Gift Somlak 2025, D2D consolidated, freight-only):
   Sea: 4,600 THB/CBM or 35 THB/KG
   Land: 7,200 THB/CBM or 48 THB/KG"""
 

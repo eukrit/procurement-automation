@@ -154,14 +154,19 @@ def check_rate_anomaly(
     Returns list of anomaly descriptions.
     """
     anomalies = []
+    # Support both new schema (sea_lcl_per_cbm) and legacy (d2d_sea_lcl_per_cbm)
     checks = [
-        ("d2d_sea_lcl_per_cbm", "sea_per_cbm", "Sea LCL/CBM"),
-        ("d2d_sea_lcl_per_kg", "sea_per_kg", "Sea LCL/KG"),
-        ("d2d_land_per_cbm", "land_per_cbm", "Land/CBM"),
-        ("d2d_land_per_kg", "land_per_kg", "Land/KG"),
+        (["sea_lcl_per_cbm", "d2d_sea_lcl_per_cbm"], "sea_per_cbm", "Sea LCL/CBM"),
+        (["sea_lcl_per_kg", "d2d_sea_lcl_per_kg"], "sea_per_kg", "Sea LCL/KG"),
+        (["land_per_cbm", "d2d_land_per_cbm"], "land_per_cbm", "Land/CBM"),
+        (["land_per_kg", "d2d_land_per_kg"], "land_per_kg", "Land/KG"),
     ]
-    for rate_key, baseline_key, label in checks:
-        vendor_rate = rates.get(rate_key)
+    for rate_keys, baseline_key, label in checks:
+        vendor_rate = None
+        for rk in rate_keys:
+            if rates.get(rk):
+                vendor_rate = rates[rk]
+                break
         base_rate = baseline.get(baseline_key)
         if vendor_rate and base_rate and base_rate > 0:
             ratio = vendor_rate / base_rate

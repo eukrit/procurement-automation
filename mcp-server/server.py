@@ -46,11 +46,13 @@ logger = logging.getLogger(__name__)
 # ── Rate Comparison Engine ────────────────────────────────────
 
 # Gift Somlak baseline (confirmed 2025)
+# Trade term: D2D consolidated (freight + last-mile only, no customs/taxes)
 BASELINE = {
     "sea_per_cbm": 4600,
     "sea_per_kg": 35,
     "land_per_cbm": 7200,
     "land_per_kg": 48,
+    "trade_term": "D2D",
     "source": "Gift Somlak rate card 2025",
 }
 
@@ -64,12 +66,23 @@ BENCHMARK_SHIPMENT = {
 }
 
 
+def _get_rate_fields(rates: dict) -> tuple:
+    """Extract sea/land CBM/KG rates from either new or legacy schema."""
+    # New schema: rates nested under trade_term-aware structure
+    sea_cbm = rates.get("sea_lcl_per_cbm") or rates.get("d2d_sea_lcl_per_cbm")
+    sea_kg = rates.get("sea_lcl_per_kg") or rates.get("d2d_sea_lcl_per_kg")
+    land_cbm = rates.get("land_per_cbm") or rates.get("d2d_land_per_cbm")
+    land_kg = rates.get("land_per_kg") or rates.get("d2d_land_per_kg")
+    return sea_cbm, sea_kg, land_cbm, land_kg
+
+
 def _score_vendor_rates(rates: dict, baseline: dict) -> dict:
     """Score a vendor's rates vs baseline. Lower is better."""
     scores = {}
 
+    vendor_sea, vendor_sea_kg, vendor_land, vendor_land_kg = _get_rate_fields(rates)
+
     # Sea LCL score
-    vendor_sea = rates.get("d2d_sea_lcl_per_cbm")
     if vendor_sea and baseline.get("sea_per_cbm"):
         scores["sea_lcl_ratio"] = round(vendor_sea / baseline["sea_per_cbm"], 3)
         scores["sea_lcl_savings_pct"] = round(
@@ -77,7 +90,6 @@ def _score_vendor_rates(rates: dict, baseline: dict) -> dict:
         )
 
     # Land score
-    vendor_land = rates.get("d2d_land_per_cbm")
     if vendor_land and baseline.get("land_per_cbm"):
         scores["land_ratio"] = round(vendor_land / baseline["land_per_cbm"], 3)
         scores["land_savings_pct"] = round(
@@ -88,7 +100,6 @@ def _score_vendor_rates(rates: dict, baseline: dict) -> dict:
     if vendor_sea:
         cbm = BENCHMARK_SHIPMENT["cbm"]
         kg = BENCHMARK_SHIPMENT["kg"]
-        vendor_sea_kg = rates.get("d2d_sea_lcl_per_kg")
         cbm_cost = vendor_sea * cbm
         kg_cost = (vendor_sea_kg or 0) * kg
         freight = max(cbm_cost, kg_cost) if vendor_sea_kg else cbm_cost
@@ -101,7 +112,6 @@ def _score_vendor_rates(rates: dict, baseline: dict) -> dict:
     if vendor_land:
         cbm = BENCHMARK_SHIPMENT["cbm"]
         kg = BENCHMARK_SHIPMENT["kg"]
-        vendor_land_kg = rates.get("d2d_land_per_kg")
         cbm_cost = vendor_land * cbm
         kg_cost = (vendor_land_kg or 0) * kg
         freight = max(cbm_cost, kg_cost) if vendor_land_kg else cbm_cost
@@ -138,11 +148,18 @@ def compare_all_rates(inquiry_id: str, db=None) -> dict:
         scores = _score_vendor_rates(rates, baseline)
         anomalies = check_rate_anomaly(rates, baseline)
 
+        sea_cbm, sea_kg, land_cbm, land_kg = _get_rate_fields(rates)
+
         comparison["vendors"].append({
             "vendor_id": v.get("vendor_id"),
             "company_en": v.get("company_en"),
             "status": v.get("status"),
+            "trade_term": rates.get("trade_term", "unknown"),
+            "trade_term_notes": rates.get("trade_term_notes", ""),
+            "includes": rates.get("includes", {}),
             "rates": rates,
+            "sea_lcl_per_cbm": sea_cbm,
+            "land_per_cbm": land_cbm,
             "scores": scores,
             "anomalies": anomalies,
             "capabilities": v.get("capabilities", {}),
