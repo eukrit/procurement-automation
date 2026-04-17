@@ -14,9 +14,10 @@ import re
 from email.utils import parseaddr
 
 from google.cloud import firestore
-from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from src.gmail_auth import build_gmail_service
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +27,6 @@ GCP_PROJECT = os.environ.get("GCP_PROJECT", "ai-agents-go")
 FIRESTORE_DATABASE = os.environ.get("FIRESTORE_DATABASE", "procurement-automation")
 IMPERSONATE_USER = os.environ.get("IMPERSONATE_USER", "eukrit@goco.bz")
 PUBSUB_TOPIC = f"projects/{GCP_PROJECT}/topics/gmail-procurement-watch"
-
-SA_KEY_FILE = os.environ.get(
-    "GOOGLE_APPLICATION_CREDENTIALS",
-    os.path.join(os.path.dirname(__file__), "..", "ai-agents-go-4c81b70995db.json"),
-)
 
 GMAIL_SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
@@ -46,18 +42,7 @@ STATE_COLLECTION = "gmail_state"
 
 def get_gmail_readonly_service(impersonate_user: str | None = None):
     """Build Gmail API service with readonly scope."""
-    user = impersonate_user or IMPERSONATE_USER
-
-    if os.path.exists(SA_KEY_FILE):
-        credentials = service_account.Credentials.from_service_account_file(
-            SA_KEY_FILE, scopes=GMAIL_SCOPES
-        )
-    else:
-        import google.auth
-        credentials, _ = google.auth.default(scopes=GMAIL_SCOPES)
-
-    delegated = credentials.with_subject(user)
-    return build("gmail", "v1", credentials=delegated, cache_discovery=False)
+    return build_gmail_service(GMAIL_SCOPES, impersonate_user=impersonate_user)
 
 
 # ── History ID State ──────────────────────────────────────────
