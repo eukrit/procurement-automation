@@ -12,12 +12,14 @@ Collections:
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from datetime import datetime, timezone
 
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
+from google.oauth2 import service_account
 
 GCP_PROJECT = os.environ.get("GCP_PROJECT", "ai-agents-go")
 FIRESTORE_DATABASE = os.environ.get("FIRESTORE_DATABASE", "procurement-automation")
@@ -29,8 +31,25 @@ TEMPLATES = "procurement_templates"
 WORKFLOW_CONFIG = "workflow_config"
 
 
+def _resolve_credentials():
+    """Resolve credentials from GOOGLE_APPLICATION_CREDENTIALS.
+
+    Handles the JSON-string case (Cloud Run --set-secrets injects the secret
+    value, not a file path) as well as the normal file-path case.
+    """
+    raw = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if raw.lstrip().startswith("{"):
+        info = json.loads(raw)
+        return service_account.Credentials.from_service_account_info(info)
+    return None  # let google.auth.default() handle it
+
+
 def get_db() -> firestore.Client:
-    return firestore.Client(project=GCP_PROJECT, database=FIRESTORE_DATABASE)
+    creds = _resolve_credentials()
+    kwargs = dict(project=GCP_PROJECT, database=FIRESTORE_DATABASE)
+    if creds:
+        kwargs["credentials"] = creds
+    return firestore.Client(**kwargs)
 
 
 def _now() -> datetime:
