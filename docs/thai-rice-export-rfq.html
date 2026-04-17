@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thai White Rice 5% Broken RFQ — 200,000 MT Export to China</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+      --orange: #d29922;
+      --red: #f85149;
+      --cyan: #56d4dd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .header .subtitle { color: var(--muted); font-size: 1.05rem; margin-bottom: 1rem; }
+    .badge-row { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
+    .top-badge {
+      display: inline-block;
+      padding: 0.25rem 0.8rem;
+      background: #1f2937;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--blue);
+    }
+    .top-badge.green { color: var(--green); border-color: #3fb95044; }
+    .top-badge.orange { color: var(--orange); border-color: #d2992244; }
+    .date-stamp { color: var(--muted); font-size: 0.8rem; margin-top: 0.8rem; }
+
+    /* Sections */
+    .section { margin-bottom: 3rem; }
+    .section h2 { font-size: 1.4rem; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+
+    /* Summary Cards */
+    .exec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .exec-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+    }
+    .exec-card .num { font-size: 2rem; font-weight: 800; }
+    .exec-card .num.green { color: var(--green); }
+    .exec-card .num.blue { color: var(--blue); }
+    .exec-card .num.purple { color: var(--purple); }
+    .exec-card .num.orange { color: var(--orange); }
+    .exec-card .num.cyan { color: var(--cyan); }
+    .exec-card .lbl { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* Tables */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    .info-table th, .info-table td {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .info-table th { background: #1f2937; color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-table td { background: var(--card); }
+    .info-table code { background: #0d1117; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.8rem; }
+    .info-table a { color: var(--blue); text-decoration: none; }
+    .info-table a:hover { text-decoration: underline; }
+
+    /* Vendor Cards */
+    .vendor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; }
+    .vendor-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.3rem 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .vendor-card:hover { border-color: var(--blue); }
+    .vendor-card .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.8rem; }
+    .vendor-card h3 { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+    .vendor-card .th-name { font-size: 0.78rem; color: var(--muted); font-weight: 400; }
+    .badge {
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .badge-sent { background: #0f2d1a; color: var(--green); border: 1px solid var(--green); }
+    .badge-top { background: #1f1f2d; color: var(--purple); border: 1px solid var(--purple); }
+    .badge-large { background: #1c2333; color: var(--blue); border: 1px solid var(--blue); }
+    .badge-mid { background: #2d2a1f; color: var(--orange); border: 1px solid var(--orange); }
+    .card-detail { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .card-detail strong { color: var(--text); }
+    .card-detail code { background: #0d1117; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.78rem; color: var(--text); }
+
+    /* Tag chips */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+    .tag {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .tag-green { background: #0f2d1a; color: var(--green); }
+    .tag-blue { background: #1c2333; color: var(--blue); }
+    .tag-orange { background: #2d2a1f; color: var(--orange); }
+    .tag-purple { background: #1f1f2d; color: var(--purple); }
+    .tag-muted { background: #1f2937; color: var(--muted); }
+
+    /* RFQ Spec */
+    .spec-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    .spec-box strong { color: var(--text); }
+
+    /* Spec Table */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 1rem;
+    }
+    .spec-table th, .spec-table td {
+      padding: 0.5rem 0.8rem;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .spec-table th { background: #1f2937; color: var(--muted); font-weight: 600; }
+    .spec-table td { background: var(--card); }
+    .spec-table td:last-child { color: var(--green); font-weight: 600; font-family: monospace; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0.55rem;
+      top: 0.3rem;
+      bottom: 0.3rem;
+      width: 2px;
+      background: var(--border);
+    }
+    .tl-item { position: relative; margin-bottom: 1.2rem; }
+    .tl-dot {
+      position: absolute;
+      left: -1.65rem;
+      top: 0.35rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      background: var(--bg);
+    }
+    .tl-dot.done { background: var(--green); }
+    .tl-dot.active { border-color: var(--blue); background: var(--blue); }
+    .tl-dot.pending { border-color: var(--muted); }
+    .tl-content h4 { font-size: 0.88rem; margin-bottom: 0.1rem; }
+    .tl-content p { font-size: 0.78rem; color: var(--muted); }
+
+    /* Back link */
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* Notes box */
+    .notes-box {
+      background: #1c2333;
+      border: 1px solid #58a6ff33;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+    .notes-box strong { color: var(--blue); }
+
+    @media (max-width: 600px) {
+      body { padding: 1rem; }
+      .vendor-grid { grid-template-columns: 1fr; }
+      .exec-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <a href="index.html" class="back-link">&larr; Back to Procurement Dashboard</a>
+
+  <div class="header">
+    <h1>Thai White Rice 5% Broken RFQ</h1>
+    <p class="subtitle">GO Corporation Co., Ltd. &mdash; 200,000 MT Export to China</p>
+    <div class="badge-row">
+      <span class="top-badge green">RFQ Sent</span>
+      <span class="top-badge">RFQ-GO-2026-04-RICE-EXPORT</span>
+      <span class="top-badge">12 Vendors</span>
+      <span class="top-badge">13 Email Contacts</span>
+    </div>
+    <p class="date-stamp">Dispatched 2026-04-17 &bull; Sent from eukrit@goco.bz &bull; Slack: #partner-nick</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="section">
+    <div class="exec-grid">
+      <div class="exec-card">
+        <div class="num green">12</div>
+        <div class="lbl">Vendors Contacted</div>
+      </div>
+      <div class="exec-card">
+        <div class="num blue">12/12</div>
+        <div class="lbl">Emails Delivered</div>
+      </div>
+      <div class="exec-card">
+        <div class="num purple">200K</div>
+        <div class="lbl">Target Volume (MT)</div>
+      </div>
+      <div class="exec-card">
+        <div class="num orange">0</div>
+        <div class="lbl">Replies Received</div>
+      </div>
+      <div class="exec-card">
+        <div class="num cyan">~$415</div>
+        <div class="lbl">Market Ref (USD/MT)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RFQ Spec -->
+  <div class="section">
+    <h2>Product Specification</h2>
+    <div class="spec-box">
+      <strong>Product:</strong> Thai White Rice 5% Broken (Well Milled)<br>
+      <strong>Standard:</strong> Thai Rice Standard / RFL Standard<br>
+      <strong>Quantity:</strong> 200,000 Metric Tons (staged delivery)<br>
+      <strong>Origin:</strong> Thailand<br>
+      <strong>Destination:</strong> China (port TBD &mdash; likely Guangzhou, Shanghai, or Tianjin)<br>
+      <strong>Packaging:</strong> New PP bags, 25 kg or 50 kg, palletized in 20ft containers<br>
+      <strong>Payment:</strong> L/C at sight or 30% T/T deposit / 70% against B/L<br>
+      <strong>Language:</strong> Bilingual RFQ (English + Thai)
+    </div>
+
+    <table class="spec-table">
+      <thead>
+        <tr><th>Quality Parameter</th><th>Specification</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Moisture</td><td>14% max</td></tr>
+        <tr><td>Whole Kernels</td><td>60% min</td></tr>
+        <tr><td>Broken (4.6 mm)</td><td>7% max</td></tr>
+        <tr><td>Red &amp; Undermilled Kernels</td><td>2% max</td></tr>
+        <tr><td>Yellow Kernels</td><td>0.5% max</td></tr>
+        <tr><td>Chalky Kernels</td><td>6% max</td></tr>
+        <tr><td>Damaged Kernels</td><td>0.25% max</td></tr>
+        <tr><td>White Glutinous Rice</td><td>1.5% max</td></tr>
+        <tr><td>Undeveloped, Immature, Foreign Matter</td><td>0.3% max</td></tr>
+        <tr><td>Paddy (grains per 1 kg)</td><td>8 grains max</td></tr>
+        <tr><td>Milling Degree</td><td>Well Milled</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Vendor Cards -->
+  <div class="section">
+    <h2>Supplier Shortlist (12 Thai Rice Exporters)</h2>
+    <div class="vendor-grid">
+
+      <!-- CP Intertrade -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>C.P. Intertrade Co., Ltd.</h3>
+            <span class="th-name">ซีพี อินเตอร์เทรด จำกัด</span>
+          </div>
+          <span class="badge badge-large">Tier 1</span>
+        </div>
+        <div class="card-detail"><strong>Brand:</strong> Royal Umbrella</div>
+        <div class="card-detail"><strong>Email:</strong> <code>persadm@cptrading.co.th</code></div>
+        <div class="card-detail"><strong>Phone:</strong> +66 2 764 7000</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~1,000,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">iso 22000</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-blue">brc</span>
+          <span class="tag tag-purple">large-capacity</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> CP Group subsidiary. Thailand's largest rice exporter. Exports to 100+ countries. Deep China ties through CP Group operations.
+        </div>
+      </div>
+
+      <!-- Capital Rice -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Capital Rice Co., Ltd. (STC Group)</h3>
+            <span class="th-name">แคปปิตอล ไรซ์ จำกัด</span>
+          </div>
+          <span class="badge badge-large">Tier 1</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>crexport@stc-group.com</code></div>
+        <div class="card-detail"><strong>Phone:</strong> +66 2 439 4848</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~500,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-purple">large-capacity</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> STC Group subsidiary. Known for competitive pricing on white rice grades. Significant China volume.
+        </div>
+      </div>
+
+      <!-- Olam Agri -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Olam Agri (Thailand) Co., Ltd.</h3>
+            <span class="th-name">โอแลม อะกริ (ประเทศไทย) จำกัด</span>
+          </div>
+          <span class="badge badge-large">Tier 1</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>thailand-enquiries@olamagri.com</code></div>
+        <div class="card-detail"><strong>Phone:</strong> +66 2 263 2950</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~1,500,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">iso 22000</span>
+          <span class="tag tag-blue">fssc 22000</span>
+          <span class="tag tag-blue">brc</span>
+          <span class="tag tag-purple">large-capacity</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Part of Olam International (Singapore). Global commodity trader. State-of-the-art processing facility on Chao Phraya River.
+        </div>
+      </div>
+
+      <!-- Asia Golden Rice -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Asia Golden Rice Co., Ltd.</h3>
+            <span class="th-name">เอเชีย โกลเด้น ไรซ์ จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>info@asiagoldenrice.com</code></div>
+        <div class="card-detail"><strong>Capacity:</strong> ~400,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-blue">brc</span>
+          <span class="tag tag-orange">email-unverified</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Established 1999. Factory in Chachoengsao. Exports to China and Middle East.
+        </div>
+      </div>
+
+      <!-- Thai Rice and Food -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Thai Rice and Food Co., Ltd.</h3>
+            <span class="th-name">ไทย ไรซ์ แอนด์ ฟู้ด จำกัด</span>
+          </div>
+          <span class="badge badge-large">Tier 1</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>info@thairiceandfoods.com</code></div>
+        <div class="card-detail"><strong>Phone:</strong> +66 2 204 2506</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~500,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-purple">large-capacity</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Large commodity desk. Also trades wheat, corn, sugar. Lake Rajada Office Complex, Bangkok.
+        </div>
+      </div>
+
+      <!-- Excel Rice -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Excel Rice &amp; Products Co., Ltd.</h3>
+            <span class="th-name">เอ็กเซล ไรซ์ แอนด์ โปรดักส์ จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>export@excelrice.co.th</code> / <code>info@excelrice.co.th</code></div>
+        <div class="card-detail"><strong>Capacity:</strong> ~300,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">brcgs</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-blue">ttm</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> 25+ years export experience. Bureau Veritas certified. Factory in Bangnampreaw, Chachoengsao. Thailand Trust Mark holder.
+        </div>
+      </div>
+
+      <!-- Thai Lee Agriculture -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Thai Lee Agriculture Co., Ltd.</h3>
+            <span class="th-name">ไทยลี การเกษตร จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>sale@thailee.com</code></div>
+        <div class="card-detail"><strong>Phone:</strong> +66 2 681 0131</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~400,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-blue">brc</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Happy Buddha &amp; Sunlee brands. #1 Jasmine Rice brand in USA. TFPA member. Strong global presence.
+        </div>
+      </div>
+
+      <!-- Riceland Foods -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Riceland Foods Ltd.</h3>
+            <span class="th-name">ไรซ์แลนด์ ฟู้ดส์ จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>export@riceland.co.th</code></div>
+        <div class="card-detail"><strong>Phone:</strong> +66 2 440 0855</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~300,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">haccp</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Established 1982. Top 10 Thai rice exporter. 40+ years experience. Key markets: China, Africa.
+        </div>
+      </div>
+
+      <!-- Siam Grains -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Siam Grains Co., Ltd.</h3>
+            <span class="th-name">สยามเกรน จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>marketing@siamgrains.com</code></div>
+        <div class="card-detail"><strong>Capacity:</strong> ~250,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-green">email-verified</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-blue">gmp</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Mid-to-large exporter with regular China shipments. TREA member.
+        </div>
+      </div>
+
+      <!-- Wonnapob -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Wonnapob Company Limited</h3>
+            <span class="th-name">วรรณภพ จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>info@wonnapob.com</code></div>
+        <div class="card-detail"><strong>Capacity:</strong> ~200,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-orange">email-unverified</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Manufacturer-exporter. Specializes in vitamin-enriched rice. White Rice, Jasmine, Glutinous, Brown.
+        </div>
+      </div>
+
+      <!-- Siri International -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Siri International Company Limited</h3>
+            <span class="th-name">ศิริ อินเตอร์เนชั่นแนล จำกัด</span>
+          </div>
+          <span class="badge badge-mid">Tier 2</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>info@siriinternational.com</code></div>
+        <div class="card-detail"><strong>Location:</strong> Chiang Rai (Northern Thailand mill)</div>
+        <div class="card-detail"><strong>Capacity:</strong> ~200,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-green">china-export</span>
+          <span class="tag tag-blue">iso 9001</span>
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-orange">email-unverified</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> 20+ years experience. Northern Thailand rice mill in Chiang Rai. Also operates logistics and import-export subsidiaries.
+        </div>
+      </div>
+
+      <!-- Thai Rice Premium Exports -->
+      <div class="vendor-card">
+        <div class="card-header">
+          <div>
+            <h3>Thai Rice Premium Exports</h3>
+          </div>
+          <span class="badge badge-mid">Tier 3</span>
+        </div>
+        <div class="card-detail"><strong>Email:</strong> <code>info@thai-ricepremiumgrainsexport.com</code></div>
+        <div class="card-detail"><strong>Capacity:</strong> ~150,000 MT/year</div>
+        <div class="tag-row">
+          <span class="tag tag-blue">haccp</span>
+          <span class="tag tag-blue">gmp</span>
+          <span class="tag tag-orange">email-unverified</span>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong> Smaller exporter included for competitive pricing comparison. Premium Thai rice grades.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Market Context -->
+  <div class="section">
+    <h2>Market Context (April 2026)</h2>
+    <div class="spec-box">
+      <strong>Thai 5% Broken Price:</strong> ~$385&ndash;$415/MT FOB (source: Thai Rice Exporters Association)<br>
+      <strong>Thailand &rarr; China Trade:</strong> ~680,000 MT exported in 2025 (+57% YoY)<br>
+      <strong>2026 Export Target:</strong> TREA projects 7.03M MT total rice exports (down 11% from 2025)<br>
+      <strong>FX Risk:</strong> Every THB 1 appreciation = $12&ndash;15/MT increase in 5% white rice<br>
+      <strong>Key Requirement:</strong> GACC (General Administration of Customs of China) registration &mdash; not all Thai exporters are registered<br>
+      <strong>Phytosanitary:</strong> Thailand-China bilateral protocol governs rice imports &mdash; must comply with AQSIQ requirements
+    </div>
+  </div>
+
+  <!-- Automation Pipeline -->
+  <div class="section">
+    <h2>Automation Pipeline</h2>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-content">
+          <h4>Supplier Research</h4>
+          <p>12 Thai rice exporters shortlisted, 13 email contacts sourced (8 verified, 5 inferred)</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-content">
+          <h4>Firestore Seeded</h4>
+          <p>Template <code>rice-export-rfq-v1</code>, inquiry <code>RFQ-GO-2026-04-RICE-EXPORT</code>, 12 vendors</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-content">
+          <h4>Gmail Label + Filter</h4>
+          <p>Label "RFQ/2026 Rice Export to China" auto-applied to inbound replies from all 13 vendor emails</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-content">
+          <h4>RFQ Dispatched &mdash; 2026-04-17</h4>
+          <p>12/12 bilingual RFQ emails sent from eukrit@goco.bz, Slack notified in #partner-nick</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-content">
+          <h4>Awaiting Replies</h4>
+          <p>Inbound emails auto-classified by Gemini; rates extracted; anomalies flagged to Slack</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot pending"></div>
+        <div class="tl-content">
+          <h4>Follow-up Reminders</h4>
+          <p>Automated reminders via Cloud Scheduler for non-responsive vendors (Day 5, Day 7, escalate Day 10)</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot pending"></div>
+        <div class="tl-content">
+          <h4>Rate Comparison</h4>
+          <p>Side-by-side FOB/CIF pricing, capacity, certs, payment terms across all responding vendors</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infrastructure -->
+  <div class="section">
+    <h2>Infrastructure</h2>
+    <table class="info-table">
+      <tr><th>Component</th><th>Detail</th></tr>
+      <tr><td>Inquiry ID</td><td><code>RFQ-GO-2026-04-RICE-EXPORT</code></td></tr>
+      <tr><td>Template</td><td><code>rice-export-rfq-v1</code></td></tr>
+      <tr><td>Cloud Function</td><td><code>send-rfq</code> (Gen2, Python 3.12, us-central1)</td></tr>
+      <tr><td>Firestore DB</td><td><code>procurement-automation</code> (asia-southeast1)</td></tr>
+      <tr><td>Gmail Sender</td><td>eukrit@goco.bz (DWD via claude@ai-agents-go SA)</td></tr>
+      <tr><td>Gmail Label</td><td>RFQ/2026 Rice Export to China</td></tr>
+      <tr><td>Slack Channel</td><td>#partner-nick</td></tr>
+      <tr><td>AI Engine</td><td>Gemini 2.5 Flash (classification, extraction, auto-reply)</td></tr>
+      <tr><td>Response Deadline</td><td>2026-05-10</td></tr>
+      <tr><td>Repo</td><td><a href="https://github.com/eukrit/procurement-automation">eukrit/procurement-automation</a></td></tr>
+    </table>
+  </div>
+
+  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:2rem;">
+    GO Corporation &bull; Procurement Automation &bull; Updated 2026-04-17
+  </p>
+
+</div>
+</body>
+</html>
