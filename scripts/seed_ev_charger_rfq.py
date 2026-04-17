@@ -170,7 +170,7 @@ def seed_inquiry(db) -> None:
             "reminder_day_1": 5,
             "reminder_day_2": 7,
             "escalate_day": 10,
-            "slack_channel": "#areda-mike",
+            "slack_channel": "C0AC8GK12N6",
         },
         "scoring_config": {
             "weights": {
