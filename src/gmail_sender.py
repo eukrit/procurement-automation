@@ -187,13 +187,65 @@ def _attach_file(msg: MIMEMultipart, filepath: str) -> None:
 # ── RFQ Dispatch ──────────────────────────────────────────────
 
 
-def build_rfq_email_body(inquiry: dict, vendor: dict) -> str:
+_SIGNATURE_HTML = """\
+<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+
+<p style="font-size: 13px; color: #666;">
+<strong>Eukrit Kraikosol | 尤克里</strong><br>
+GO Corporation Co., Ltd.<br>
+Email: eukrit@goco.bz | Reply-To: shipping@goco.bz<br>
+WeChat: eukrit | Tel: +66 61 491 6393<br>
+11/2 P23 Tower, Unit 8A, Sukhumvit 23, Bangkok 10110, Thailand
+</p>
+"""
+
+
+def _paragraphs_to_html(text: str) -> str:
+    """Convert plain text with blank-line paragraph breaks to <p> tags."""
+    chunks = [chunk.strip() for chunk in text.split("\n\n") if chunk.strip()]
+    return "\n".join(
+        f"<p>{chunk.replace(chr(10), '<br>')}</p>" for chunk in chunks
+    )
+
+
+def build_rfq_email_body(
+    inquiry: dict,
+    vendor: dict,
+    template: dict | None = None,
+) -> str:
     """Build bilingual HTML email body for RFQ dispatch.
 
-    Uses the inquiry's template or falls back to the default freight template.
+    If `template` has `email_template.body_cn` / `body_en`, renders from
+    those (with `{vendor_name}`, `{deadline}`, `{title}` substitutions).
+    Otherwise falls back to the default freight RFQ body.
     """
     deadline = inquiry.get("response_deadline", "TBD")
     vendor_name = vendor.get("company_en", "Sir/Madam")
+    title = inquiry.get("title", "RFQ")
+
+    email_template = (template or {}).get("email_template") or {}
+    body_cn_src = email_template.get("body_cn")
+    body_en_src = email_template.get("body_en")
+
+    if body_cn_src and body_en_src:
+        substitutions = {
+            "vendor_name": vendor_name,
+            "deadline": deadline,
+            "title": title,
+        }
+        body_cn = body_cn_src.format(**substitutions)
+        body_en = body_en_src.format(**substitutions)
+        return f"""\
+<div style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.8; color: #333;">
+
+{_paragraphs_to_html(body_cn)}
+
+<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+
+{_paragraphs_to_html(body_en)}
+
+{_SIGNATURE_HTML}
+</div>"""
 
     html = f"""\
 <div style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.8; color: #333;">
@@ -222,16 +274,7 @@ forwarding services covering sea LCL/FCL, land transport, door-to-door and EXW t
 
 <p>Kindly submit your quotation by <strong>{deadline}</strong> by replying to this email.</p>
 
-<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-
-<p style="font-size: 13px; color: #666;">
-<strong>Eukrit Kraikosol | 尤克里</strong><br>
-GO Corporation Co., Ltd.<br>
-Email: eukrit@goco.bz | Reply-To: shipping@goco.bz<br>
-WeChat: eukrit | Tel: +66 61 491 6393<br>
-11/2 P23 Tower, Unit 8A, Sukhumvit 23, Bangkok 10110, Thailand
-</p>
-
+{_SIGNATURE_HTML}
 </div>"""
     return html
 
@@ -241,6 +284,7 @@ def send_rfq_to_vendor(
     vendor: dict,
     service=None,
     dry_run: bool = False,
+    template: dict | None = None,
 ) -> dict:
     """Send RFQ email to a single vendor.
 
@@ -249,6 +293,10 @@ def send_rfq_to_vendor(
         vendor: Vendor document from Firestore.
         service: Pre-built Gmail service (optional).
         dry_run: If True, build the email but don't send it.
+        template: Optional template dict (from procurement_templates). If
+            provided and it contains email_template.body_cn/body_en, the
+            RFQ body is rendered from the template; otherwise the default
+            freight body is used.
 
     Returns:
         dict with send result or dry_run preview.
@@ -272,7 +320,7 @@ def send_rfq_to_vendor(
     )
 
     # Body
-    body_html = build_rfq_email_body(inquiry, vendor)
+    body_html = build_rfq_email_body(inquiry, vendor, template=template)
 
     # Attachments
     attachments = []

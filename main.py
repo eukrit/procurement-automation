@@ -54,11 +54,21 @@ from src.slack_notifier import (
     notify_draft_for_approval,
     notify_rate_anomaly,
     notify_reminder_summary,
+    notify_rfq_dispatched,
 )
 from src.rfq_store import list_inquiries
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _slack_channel_for(inquiry: dict | None) -> str | None:
+    """Per-inquiry Slack channel override. Falls back to env SLACK_CHANNEL
+    when not set on the inquiry.
+    """
+    if not inquiry:
+        return None
+    return inquiry.get("automation_config", {}).get("slack_channel")
 
 
 @functions_framework.http
@@ -109,6 +119,17 @@ def send_rfq(request: Request):
     # Build Gmail service once
     service = None if dry_run else get_gmail_send_service()
 
+    # Load template once (same for every vendor in this inquiry)
+    template = None
+    template_id = inquiry.get("template_id")
+    if template_id:
+        template = get_template(template_id, db=db)
+        if not template:
+            logger.warning(
+                "Template %s referenced by inquiry %s not found — falling back to default body",
+                template_id, inquiry_id,
+            )
+
     results = []
     sent_count = 0
     skipped_count = 0
@@ -122,6 +143,7 @@ def send_rfq(request: Request):
                 vendor=vendor,
                 service=service,
                 dry_run=dry_run,
+                template=template,
             )
 
             if result.get("skipped"):
@@ -187,6 +209,21 @@ def send_rfq(request: Request):
             db.collection("rfq_inquiries").document(inquiry_id).update(
                 {"status": "sending"}
             )
+
+    # Slack dispatch notification (honors per-inquiry channel override)
+    if not dry_run and (sent_count or skipped_count or error_count):
+        try:
+            notify_rfq_dispatched(
+                inquiry_id=inquiry_id,
+                inquiry_title=inquiry.get("title", ""),
+                sent=sent_count,
+                skipped=skipped_count,
+                errors=error_count,
+                vendor_details=results,
+                channel=_slack_channel_for(inquiry),
+            )
+        except Exception as e:
+            logger.error("Slack notify_rfq_dispatched failed: %s", e)
 
     response = {
         "inquiry_id": inquiry_id,
@@ -379,6 +416,7 @@ def _handle_rate_quote(
     })
 
     # Slack notification for new response
+    slack_channel = _slack_channel_for(inquiry)
     try:
         notify_new_response(
             inquiry_id=inquiry_id,
@@ -387,6 +425,7 @@ def _handle_rate_quote(
             intent=classification.get("intent", "rate_quote"),
             summary=classification.get("summary", ""),
             confidence=classification.get("confidence", 0),
+            channel=slack_channel,
         )
     except Exception as e:
         logger.error("Slack notify_new_response failed: %s", e)
@@ -399,7 +438,13 @@ def _handle_rate_quote(
             if anomalies:
                 logger.warning("Rate anomalies for %s: %s", vendor_id, anomalies)
                 try:
-                    notify_rate_anomaly(inquiry_id, vendor_id, vendor.get("company_en", ""), anomalies)
+                    notify_rate_anomaly(
+                        inquiry_id,
+                        vendor_id,
+                        vendor.get("company_en", ""),
+                        anomalies,
+                        channel=slack_channel,
+                    )
                 except Exception as e:
                     logger.error("Slack rate anomaly notify failed: %s", e)
 
@@ -426,14 +471,14 @@ def _handle_questions_or_missing(
     if auto_reply_count >= max_auto_replies:
         logger.info("Vendor %s hit auto-reply limit (%d) — escalating", vendor_id, max_auto_replies)
         update_vendor_status(inquiry_id, vendor_id, "escalated", note="Auto-reply limit reached", db=db)
-        _send_slack_escalation(inquiry_id, vendor_id, vendor, "Auto-reply limit reached", db)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, "Auto-reply limit reached", db, inquiry=inquiry)
         return
 
     # Check for escalation keywords
     if classification.get("should_escalate"):
         reason = classification.get("escalation_reason", "Gemini flagged for escalation")
         update_vendor_status(inquiry_id, vendor_id, "escalated", note=reason, db=db)
-        _send_slack_escalation(inquiry_id, vendor_id, vendor, reason, db)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, reason, db, inquiry=inquiry)
         return
 
     # Get template context for auto-reply
@@ -458,7 +503,7 @@ def _handle_questions_or_missing(
     if reply.get("should_escalate"):
         reason = reply.get("escalation_reason", "Auto-reply flagged for escalation")
         logger.info("Auto-reply escalated for %s: %s", vendor_id, reason)
-        _send_slack_escalation(inquiry_id, vendor_id, vendor, reason, db)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, reason, db, inquiry=inquiry)
         return
 
     if reply_confidence >= min_confidence and reply.get("body_html"):
@@ -512,6 +557,7 @@ def _handle_questions_or_missing(
                     vendor_name=vendor.get("company_en", vendor_id),
                     confidence=reply_confidence,
                     answers=reply.get("answers_given"),
+                    channel=_slack_channel_for(inquiry),
                 )
             except Exception as e:
                 logger.error("Slack auto-reply notify failed: %s", e)
@@ -522,11 +568,11 @@ def _handle_questions_or_missing(
     elif reply_confidence >= 0.6:
         # Draft for Slack approval
         logger.info("Auto-reply draft for %s (confidence=%.2f) — needs approval", vendor_id, reply_confidence)
-        _send_slack_draft_approval(inquiry_id, vendor_id, vendor, reply, db)
+        _send_slack_draft_approval(inquiry_id, vendor_id, vendor, reply, db, inquiry=inquiry)
     else:
         # Too low confidence — escalate
         logger.info("Auto-reply confidence too low (%.2f) for %s — escalating", reply_confidence, vendor_id)
-        _send_slack_escalation(inquiry_id, vendor_id, vendor, f"Low confidence auto-reply ({reply_confidence:.2f})", db)
+        _send_slack_escalation(inquiry_id, vendor_id, vendor, f"Low confidence auto-reply ({reply_confidence:.2f})", db, inquiry=inquiry)
 
 
 def _count_responded(inquiry_id: str, db) -> int:
@@ -554,7 +600,8 @@ def _intent_to_message_type(intent: str) -> str:
 
 
 def _send_slack_escalation(
-    inquiry_id: str, vendor_id: str, vendor: dict, reason: str, db
+    inquiry_id: str, vendor_id: str, vendor: dict, reason: str, db,
+    inquiry: dict | None = None,
 ) -> None:
     """Send a Slack notification for escalation."""
     logger.info(
@@ -573,13 +620,15 @@ def _send_slack_escalation(
                 "contact_whatsapp": vendor.get("contact_whatsapp"),
                 "contact_phone": vendor.get("contact_phone"),
             },
+            channel=_slack_channel_for(inquiry),
         )
     except Exception as e:
         logger.error("Slack escalation failed: %s", e)
 
 
 def _send_slack_draft_approval(
-    inquiry_id: str, vendor_id: str, vendor: dict, reply: dict, db
+    inquiry_id: str, vendor_id: str, vendor: dict, reply: dict, db,
+    inquiry: dict | None = None,
 ) -> None:
     """Send auto-reply draft to Slack for human approval."""
     logger.info(
@@ -596,6 +645,7 @@ def _send_slack_draft_approval(
             draft_subject=reply.get("subject", ""),
             draft_body_preview=body_preview,
             confidence=reply.get("confidence", 0),
+            channel=_slack_channel_for(inquiry),
         )
     except Exception as e:
         logger.error("Slack draft approval failed: %s", e)
