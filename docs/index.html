@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procurement Automation Dashboard | GO Corporation</title>
+<style>
+  :root { --bg:#0f1117; --surface:#1a1d27; --surface2:#232733; --border:#2d3140; --accent:#3b82f6; --accent2:#8b5cf6; --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --orange:#f97316; --text:#e2e8f0; --muted:#94a3b8; --dim:#64748b; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter','Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; min-height:100vh; }
+  .container { max-width:1200px; margin:0 auto; padding:24px 20px; }
+  h1 { font-size:1.5rem; font-weight:700; margin-bottom:4px; }
+  .subtitle { color:var(--muted); font-size:0.85rem; margin-bottom:24px; }
+  .grid { display:grid; gap:16px; margin-bottom:24px; }
+  .grid-4 { grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+  .grid-2 { grid-template-columns:1fr 1fr; }
+  @media(max-width:768px) { .grid-2 { grid-template-columns:1fr; } }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .card-header { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:8px; }
+  .card-value { font-size:1.8rem; font-weight:700; }
+  .card-sub { font-size:0.8rem; color:var(--dim); margin-top:4px; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:600; text-transform:uppercase; }
+  .badge-green { background:#064e3b; color:#6ee7b7; }
+  .badge-blue { background:#1e3a5f; color:#93c5fd; }
+  .badge-yellow { background:#78350f; color:#fcd34d; }
+  .badge-red { background:#7f1d1d; color:#fca5a5; }
+  .badge-gray { background:#374151; color:#9ca3af; }
+  .badge-purple { background:#4c1d95; color:#c4b5fd; }
+  .badge-orange { background:#7c2d12; color:#fdba74; }
+  table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  th { text-align:left; padding:12px 16px; background:var(--surface2); color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); }
+  td { padding:10px 16px; border-bottom:1px solid var(--border); }
+  tr:hover td { background:var(--surface2); }
+  .rate { font-weight:600; font-variant-numeric:tabular-nums; }
+  .rate-good { color:var(--green); }
+  .rate-warn { color:var(--yellow); }
+  .rate-bad { color:var(--red); }
+  .rate-neutral { color:var(--text); }
+  .section-title { font-size:1.1rem; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .dot-green { background:var(--green); }
+  .dot-blue { background:var(--accent); }
+  .dot-yellow { background:var(--yellow); }
+  .dot-red { background:var(--red); }
+  .progress-bar { height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:8px; }
+  .progress-fill { height:100%; border-radius:4px; transition:width 0.5s; }
+  .baseline-row { background:var(--surface2); }
+  .baseline-row td { color:var(--muted); font-style:italic; }
+  .tag { font-size:0.7rem; padding:1px 6px; border-radius:4px; background:var(--surface2); color:var(--dim); margin-right:4px; }
+  .infra-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+  .infra-item { display:flex; align-items:center; gap:10px; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; }
+  .infra-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .infra-label { font-size:0.85rem; font-weight:500; }
+  .infra-sub { font-size:0.7rem; color:var(--dim); }
+  .footer { text-align:center; padding:32px 0 16px; color:var(--dim); font-size:0.75rem; }
+  .compare-highlight { background:linear-gradient(90deg,#064e3b22,transparent); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Procurement Automation Dashboard</h1>
+  <p class="subtitle">GO Corporation Co., Ltd. | RFQ Workflow Engine | Last updated: 17 April 2026</p>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-4">
+    <div class="card">
+      <div class="card-header">Inquiry</div>
+      <div class="card-value" style="font-size:1rem;color:var(--accent)">RFQ-GO-2026-04-FREIGHT</div>
+      <div class="card-sub"><span class="badge badge-green">ACTIVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header">Vendors Contacted</div>
+      <div class="card-value">13 <span style="font-size:1rem;color:var(--dim)">/ 21</span></div>
+      <div class="card-sub">8 excluded (Thai / unreachable)</div>
+    </div>
+    <div class="card">
+      <div class="card-header">Responses</div>
+      <div class="card-value" style="color:var(--green)">5</div>
+      <div class="card-sub">3 with rates, 2 awaiting reply</div>
+    </div>
+    <div class="card">
+      <div class="card-header">Deadline</div>
+      <div class="card-value" style="font-size:1.4rem">Apr 26</div>
+      <div class="card-sub">9 days remaining</div>
+    </div>
+  </div>
+
+  <!-- Status Breakdown -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><span class="dot dot-blue"></span> Vendor Status Breakdown</div>
+    <div class="progress-bar" style="margin-bottom:16px">
+      <div class="progress-fill" style="width:14.3%;background:var(--green);display:inline-block"></div><div class="progress-fill" style="width:9.5%;background:#059669;display:inline-block"></div><div class="progress-fill" style="width:9.5%;background:var(--yellow);display:inline-block"></div><div class="progress-fill" style="width:42.9%;background:var(--accent);display:inline-block"></div><div class="progress-fill" style="width:23.8%;background:var(--dim);display:inline-block"></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:0.8rem">
+      <span><span class="dot dot-green" style="margin-right:4px"></span> Complete response: 1</span>
+      <span><span class="dot" style="background:#059669;margin-right:4px"></span> Response received: 2</span>
+      <span><span class="dot dot-yellow" style="margin-right:4px"></span> Awaiting response: 2</span>
+      <span><span class="dot dot-blue" style="margin-right:4px"></span> Reminder sent: 9</span>
+      <span><span class="dot" style="background:var(--dim);margin-right:4px"></span> Not contacted: 7</span>
+    </div>
+  </div>
+
+  <!-- Rate Comparison -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><span class="dot dot-green"></span> Rate Comparison</div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Vendor</th>
+          <th>Trade Term</th>
+          <th style="text-align:right">Sea LCL /CBM</th>
+          <th style="text-align:right">Land /CBM</th>
+          <th style="text-align:right">Sea Transit</th>
+          <th style="text-align:right">Land Transit</th>
+          <th>Includes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="baseline-row">
+          <td>Gift Somlak (baseline)</td>
+          <td><span class="badge badge-gray">D2D</span></td>
+          <td style="text-align:right" class="rate">4,600</td>
+          <td style="text-align:right" class="rate">7,200</td>
+          <td style="text-align:right">-</td>
+          <td style="text-align:right">-</td>
+          <td><span class="tag">freight</span><span class="tag">last-mile</span></td>
+        </tr>
+        <tr class="compare-highlight">
+          <td><strong>CSC Logistics</strong><br><span style="font-size:0.7rem;color:var(--dim)">广州速达国际货运</span></td>
+          <td><span class="badge badge-green">DDP</span></td>
+          <td style="text-align:right" class="rate rate-good">3,500 <span style="font-size:0.65rem;color:var(--green)">-24%</span></td>
+          <td style="text-align:right" class="rate rate-good">6,500 <span style="font-size:0.65rem;color:var(--green)">-10%</span></td>
+          <td style="text-align:right">15-20d</td>
+          <td style="text-align:right">8-12d</td>
+          <td><span class="tag">warehouse</span><span class="tag">freight</span><span class="tag">customs</span><span class="tag">taxes</span><span class="tag">delivery</span></td>
+        </tr>
+        <tr>
+          <td><strong>SINO Shipping</strong><br><span style="font-size:0.7rem;color:var(--dim)">中外运</span></td>
+          <td><span class="badge badge-green">DDP</span></td>
+          <td style="text-align:right" class="rate rate-bad">5,940 <span style="font-size:0.65rem;color:var(--red)">+29%</span></td>
+          <td style="text-align:right" class="rate rate-warn">7,740 <span style="font-size:0.65rem;color:var(--yellow)">+7%</span></td>
+          <td style="text-align:right">16-18d</td>
+          <td style="text-align:right">10d</td>
+          <td><span class="tag">warehouse</span><span class="tag">freight</span><span class="tag">customs</span><span class="tag">taxes</span><span class="tag">delivery</span></td>
+        </tr>
+        <tr>
+          <td><strong>Tip Shipping</strong><br><span style="font-size:0.7rem;color:var(--dim)">WeChat: Milly, Qingdao</span></td>
+          <td><span class="badge badge-yellow">D2D</span></td>
+          <td style="text-align:right" class="rate rate-good">4,400 <span style="font-size:0.65rem;color:var(--green)">-4%</span></td>
+          <td style="text-align:right" class="rate rate-warn">7,370 <span style="font-size:0.65rem;color:var(--yellow)">+2%</span></td>
+          <td style="text-align:right">-</td>
+          <td style="text-align:right">-</td>
+          <td><span class="tag">per-kg billing</span><span class="tag">by cargo type</span></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:0.75rem;color:var(--dim);margin-top:12px">
+      Percentages vs Gift Somlak baseline. CSC and SINO are DDP (all-inclusive); baseline is D2D (freight-only). CSC's DDP price is lower than Gift Somlak's freight-only price.
+    </p>
+  </div>
+
+  <!-- CSC Tiered Rates -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><span class="dot dot-green"></span> CSC Logistics — Tiered Rate Card (DDP)</div>
+    <table>
+      <thead>
+        <tr><th>Cargo Type</th><th style="text-align:right">Sea (RMB/CBM)</th><th style="text-align:right">Sea (THB)</th><th style="text-align:right">Land (RMB/CBM)</th><th style="text-align:right">Land (THB)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Normal goods</td><td style="text-align:right" class="rate rate-good">700</td><td style="text-align:right" class="rate rate-good">3,500</td><td style="text-align:right" class="rate rate-good">1,300</td><td style="text-align:right" class="rate rate-good">6,500</td></tr>
+        <tr><td>Sensitive goods</td><td style="text-align:right" class="rate rate-neutral">1,200</td><td style="text-align:right" class="rate rate-neutral">6,000</td><td style="text-align:right" class="rate rate-neutral">1,800</td><td style="text-align:right" class="rate rate-neutral">9,000</td></tr>
+        <tr><td>Registered brand goods</td><td style="text-align:right" class="rate rate-warn">1,800</td><td style="text-align:right" class="rate rate-warn">9,000</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.75rem;color:var(--dim);margin-top:8px">FX rate: 1 CNY = 5 THB. All rates DDP to Bangkok door. Contact: Sam (WeChat: cargospeeds)</p>
+  </div>
+
+  <!-- All Vendors Table -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><span class="dot dot-blue"></span> All Vendors</div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr><th>Vendor</th><th>Status</th><th>Contact</th><th style="text-align:right">Sea /CBM</th><th style="text-align:right">Land /CBM</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CSC Logistics</td><td><span class="badge badge-green">complete</span></td><td>info@csc.cc</td><td style="text-align:right" class="rate rate-good">3,500</td><td style="text-align:right" class="rate rate-good">6,500</td><td>DDP formal quote Apr 17</td></tr>
+        <tr><td>SINO Shipping</td><td><span class="badge badge-blue">responded</span></td><td>angel.gz@fssouthchina.com</td><td style="text-align:right" class="rate">5,940</td><td style="text-align:right" class="rate">7,740</td><td>DDP, rate expired Apr 18</td></tr>
+        <tr><td>Tip Shipping</td><td><span class="badge badge-blue">responded</span></td><td>WeChat: Milly</td><td style="text-align:right" class="rate">4,400</td><td style="text-align:right" class="rate">7,370</td><td>D2D per-kg, Qingdao</td></tr>
+        <tr><td>STU Supply Chain</td><td><span class="badge badge-yellow">awaiting</span></td><td>maggie@stusupplychain.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Answered dimension Q, awaiting rates</td></tr>
+        <tr><td>SDI Logistics</td><td><span class="badge badge-yellow">awaiting</span></td><td>lucy@sdilogistics.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Answered DDP/DDU Q, awaiting rates</td></tr>
+        <tr><td>DFH Global Logistics</td><td><span class="badge badge-purple">reminder</span></td><td>info@dfhfreight.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Joya to follow up, nudged</td></tr>
+        <tr><td>BT Shipping</td><td><span class="badge badge-purple">reminder</span></td><td>tim@btshipping.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Foshan warehouse, rail option</td></tr>
+        <tr><td>Canton Cargo</td><td><span class="badge badge-purple">reminder</span></td><td>sales@cantoncargo.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Canton Fair specialist</td></tr>
+        <tr><td>China BRF Logistics</td><td><span class="badge badge-purple">reminder</span></td><td>offer@boruifeng.cn</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>NVOCC, Qingdao-based</td></tr>
+        <tr><td>DDPChain</td><td><span class="badge badge-purple">reminder</span></td><td>sale@DDPCHAIN.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>DDP specialist, 15+ cities</td></tr>
+        <tr><td>Dimerco Express</td><td><span class="badge badge-purple">reminder</span></td><td>Marketing@dimerco.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Enterprise-grade, 75 offices</td></tr>
+        <tr><td>DJCargo</td><td><span class="badge badge-purple">reminder</span></td><td>info@djcargo.cn</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>China-TH specialist, daily departures</td></tr>
+        <tr><td>Goodhope Freight</td><td><span class="badge badge-purple">reminder</span></td><td>sales007@goodhopefreight.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Canton Fair participant</td></tr>
+        <tr><td>Micocean International</td><td><span class="badge badge-purple">reminder</span></td><td>anna@micocean.com</td><td style="text-align:right;color:var(--dim)">-</td><td style="text-align:right;color:var(--dim)">-</td><td>Class A, WCA+NVOCC</td></tr>
+        <tr style="color:var(--dim)"><td>Cargo From China</td><td><span class="badge badge-gray">draft</span></td><td>-</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Website form broken</td></tr>
+        <tr style="color:var(--dim)"><td>Shengheng Thailand</td><td><span class="badge badge-gray">draft</span></td><td>WeChat only</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Website blocked (malware)</td></tr>
+        <tr style="color:var(--dim)"><td>Tailangman (TLM)</td><td><span class="badge badge-gray">draft</span></td><td>-</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Website down</td></tr>
+        <tr style="color:var(--dim)"><td>Siam Shipping</td><td><span class="badge badge-red">excluded</span></td><td>-</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Thai company</td></tr>
+        <tr style="color:var(--dim)"><td>Next Logistics</td><td><span class="badge badge-red">excluded</span></td><td>-</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Thai company</td></tr>
+        <tr style="color:var(--dim)"><td>TPI Import-Export</td><td><span class="badge badge-red">excluded</span></td><td>-</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Thai company</td></tr>
+        <tr style="color:var(--dim)"><td>Unithai Group</td><td><span class="badge badge-red">excluded</span></td><td>-</td><td style="text-align:right">-</td><td style="text-align:right">-</td><td>Thai company</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Infrastructure -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><span class="dot dot-green"></span> Infrastructure</div>
+    <div class="infra-grid">
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">send-rfq</div><div class="infra-sub">Cloud Function (HTTP) | ACTIVE</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">process-procurement-email</div><div class="infra-sub">Cloud Function (Pub/Sub) | ACTIVE</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">rfq-reminder-cron</div><div class="infra-sub">Cloud Function (HTTP) | ACTIVE</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">Cloud Scheduler</div><div class="infra-sub">Daily 09:00 Bangkok | ENABLED</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">Gmail Watch</div><div class="infra-sub">eukrit@goco.bz | Active</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">Firestore DB</div><div class="infra-sub">procurement-automation | asia-southeast1</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--green)"></div><div><div class="infra-label">Gemini 2.5 Flash</div><div class="infra-sub">Classify + Extract + Auto-Reply</div></div></div>
+      <div class="infra-item"><div class="infra-dot" style="background:var(--yellow)"></div><div><div class="infra-label">Cloud Build Trigger</div><div class="infra-sub">Not configured (manual deploy)</div></div></div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card">
+    <div class="section-title"><span class="dot dot-blue"></span> Timeline</div>
+    <table>
+      <tbody>
+        <tr><td style="color:var(--dim);width:100px">Apr 6</td><td>RFQ sent to 13 vendors (6 initial + 7 discovered via Chrome)</td></tr>
+        <tr><td style="color:var(--dim)">Apr 7</td><td>4 vendors responded: CSC (rates), STU (question), SDI (question), DFH (ack)</td></tr>
+        <tr><td style="color:var(--dim)">Apr 7</td><td>SINO Shipping assigned Angel Feng, quote within 24h</td></tr>
+        <tr><td style="color:var(--dim)">Apr 8</td><td>CSC full rate card via email. SINO DDP quote received (USD pricing)</td></tr>
+        <tr><td style="color:var(--dim)">Apr 8</td><td>Tip Shipping rates received via WeChat (Milly, per-kg billing)</td></tr>
+        <tr><td style="color:var(--dim)">Apr 17</td><td>CSC formal quote update. Follow-ups sent to all non-responders</td></tr>
+        <tr><td style="color:var(--dim)">Apr 17</td><td>Auto-replies sent to STU (dimension Q) and SDI (DDP/DDU Q)</td></tr>
+        <tr><td style="color:var(--dim)">Apr 17</td><td>Cloud Functions deployed, Cloud Scheduler created, deadline extended to Apr 26</td></tr>
+        <tr><td style="color:var(--accent)">Apr 26</td><td><strong>Extended deadline</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Procurement Automation v1.0.0 | eukrit/procurement-automation | Gemini 2.5 Flash + Gmail + Firestore + Slack<br>
+    Generated by Claude Opus 4.6 | 122 tests passing
+  </div>
+
+</div>
+</body>
+</html>
