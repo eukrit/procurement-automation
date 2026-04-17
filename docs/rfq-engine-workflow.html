@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RFQ Engine — Procurement Workflow</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+      --orange: #d29922;
+      --red: #f85149;
+      --cyan: #56d4dd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; font-size: 0.88rem; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .header .subtitle { color: var(--muted); font-size: 1.05rem; margin-bottom: 1rem; }
+    .badge-row { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
+    .top-badge {
+      display: inline-block; padding: 0.25rem 0.8rem; background: #1f2937;
+      border: 1px solid var(--border); border-radius: 20px;
+      font-family: monospace; font-size: 0.8rem; color: var(--blue);
+    }
+    .top-badge.green { color: var(--green); border-color: #3fb95044; }
+    .top-badge.purple { color: var(--purple); border-color: #bc8cff44; }
+    .date-stamp { color: var(--muted); font-size: 0.8rem; margin-top: 0.8rem; }
+
+    /* Sections */
+    .section { margin-bottom: 3rem; }
+    .section h2 { font-size: 1.4rem; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+
+    /* KPI row */
+    .exec-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .exec-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.2rem; text-align: center;
+    }
+    .exec-card .num { font-size: 2rem; font-weight: 800; }
+    .exec-card .num.green { color: var(--green); }
+    .exec-card .num.blue { color: var(--blue); }
+    .exec-card .num.purple { color: var(--purple); }
+    .exec-card .num.orange { color: var(--orange); }
+    .exec-card .num.cyan { color: var(--cyan); }
+    .exec-card .lbl { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* Pipeline steps */
+    .pipeline { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: flex; align-items: stretch; gap: 0;
+      position: relative;
+    }
+    .step-left {
+      flex-shrink: 0; width: 72px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .step-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem; z-index: 2;
+    }
+    .step-num.manual { background: var(--blue); color: var(--bg); }
+    .step-num.script { background: var(--green); color: var(--bg); }
+    .step-num.auto { background: var(--purple); color: var(--bg); }
+    .step-num.curl { background: var(--orange); color: var(--bg); }
+    .step-connector {
+      flex: 1; width: 3px; background: var(--border);
+      min-height: 16px;
+    }
+    .step-body {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 0.8rem;
+      margin-left: 0.8rem; transition: border-color 0.2s;
+    }
+    .step-body:hover { border-color: var(--blue); }
+    .step-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .step-body .step-type {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 0.6rem;
+    }
+    .step-body .step-type.manual { color: var(--blue); }
+    .step-body .step-type.script { color: var(--green); }
+    .step-body .step-type.auto { color: var(--purple); }
+    .step-body .step-type.curl { color: var(--orange); }
+    .step-body p { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .step-body p strong { color: var(--text); }
+
+    /* File chips */
+    .file-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+    .file-chip {
+      font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 4px;
+      font-family: monospace; background: #0d1117; color: var(--cyan);
+      border: 1px solid #56d4dd33;
+    }
+    .tool-chip {
+      font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 4px;
+      font-family: monospace; background: #1f1f2d; color: var(--purple);
+      border: 1px solid #bc8cff33;
+    }
+    .cmd-chip {
+      font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 4px;
+      font-family: monospace; background: #2d2a1f; color: var(--orange);
+      border: 1px solid #d2992233;
+    }
+
+    /* State machine diagram */
+    .state-diagram {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem; overflow-x: auto;
+    }
+    .state-row { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+    .state-node {
+      padding: 0.5rem 0.9rem; border-radius: 8px;
+      font-size: 0.78rem; font-weight: 600; text-align: center;
+      white-space: nowrap;
+    }
+    .state-arrow { color: var(--muted); font-size: 1.2rem; }
+    .state-draft { background: #1f2937; border: 2px solid var(--muted); color: var(--muted); }
+    .state-sent { background: #1c2333; border: 2px solid var(--blue); color: var(--blue); }
+    .state-response { background: #0f2d1a; border: 2px solid var(--green); color: var(--green); }
+    .state-auto { background: #1f1f2d; border: 2px solid var(--purple); color: var(--purple); }
+    .state-escalate { background: #2d2a1f; border: 2px solid var(--orange); color: var(--orange); }
+    .state-final { background: #0f2d1a; border: 2px solid var(--green); color: var(--green); }
+    .state-closed { background: #2d1f1f; border: 2px solid var(--red); color: var(--red); }
+    .state-label { font-size: 0.65rem; color: var(--muted); text-align: center; margin-bottom: 0.4rem; }
+
+    /* Tables */
+    .info-table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem;
+    }
+    .info-table th, .info-table td {
+      padding: 0.6rem 0.8rem; border: 1px solid var(--border); text-align: left;
+    }
+    .info-table th { background: #1f2937; color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-table td { background: var(--card); }
+    .info-table code { background: #0d1117; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.8rem; }
+
+    /* Active RFQs grid */
+    .rfq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; }
+    .rfq-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.2rem 1.5rem; transition: border-color 0.2s;
+    }
+    .rfq-card:hover { border-color: var(--blue); }
+    .rfq-card .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+    .rfq-card h3 { font-size: 0.95rem; font-weight: 600; }
+    .badge {
+      padding: 0.2rem 0.6rem; border-radius: 12px;
+      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; white-space: nowrap;
+    }
+    .badge-live { background: #0f2d1a; color: var(--green); border: 1px solid var(--green); }
+    .badge-awaiting { background: #1c2333; color: var(--blue); border: 1px solid var(--blue); }
+    .badge-closed { background: #1f2937; color: var(--muted); border: 1px solid var(--border); }
+    .card-detail { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.2rem; }
+    .card-detail strong { color: var(--text); }
+    .card-detail code { background: #0d1117; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.78rem; color: var(--text); }
+
+    /* Naming box */
+    .naming-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.8rem;
+    }
+    .naming-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.9rem 1.1rem;
+    }
+    .naming-item .nm-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.3rem; }
+    .naming-item .nm-pattern { font-family: monospace; font-size: 0.85rem; color: var(--cyan); }
+    .naming-item .nm-example { font-family: monospace; font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* Escalation keywords */
+    .kw-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    .kw-chip {
+      background: #2d1f1f; border: 1px solid #f8514933;
+      border-radius: 4px; padding: 0.2rem 0.45rem;
+      font-size: 0.72rem; font-family: monospace; color: #f8a4a0;
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 1rem; }
+      .step-left { width: 52px; }
+      .step-num { width: 36px; height: 36px; font-size: 0.85rem; }
+      .rfq-grid { grid-template-columns: 1fr; }
+      .naming-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <a href="index.html" class="back-link">&larr; Back to Procurement Dashboard</a>
+
+  <div class="header">
+    <h1>RFQ Engine</h1>
+    <p class="subtitle">Procurement Automation Workflow &mdash; GO Corporation</p>
+    <div class="badge-row">
+      <span class="top-badge green">Operational</span>
+      <span class="top-badge">Gemini 2.5 Flash</span>
+      <span class="top-badge">Gmail DWD</span>
+      <span class="top-badge purple">Any Product Category</span>
+    </div>
+    <p class="date-stamp">Repo: <a href="https://github.com/eukrit/procurement-automation">eukrit/procurement-automation</a> &bull; Region: us-central1 &bull; Updated 2026-04-17</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="section">
+    <div class="exec-grid">
+      <div class="exec-card">
+        <div class="num green">8</div>
+        <div class="lbl">Pipeline Steps</div>
+      </div>
+      <div class="exec-card">
+        <div class="num blue">2</div>
+        <div class="lbl">Active RFQ Rounds</div>
+      </div>
+      <div class="exec-card">
+        <div class="num purple">3</div>
+        <div class="lbl">Cloud Functions</div>
+      </div>
+      <div class="exec-card">
+        <div class="num orange">3</div>
+        <div class="lbl">Gemini Prompts</div>
+      </div>
+      <div class="exec-card">
+        <div class="num cyan">8</div>
+        <div class="lbl">Slack Notification Types</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active RFQs -->
+  <div class="section">
+    <h2>Active RFQ Rounds</h2>
+    <div class="rfq-grid">
+      <div class="rfq-card">
+        <div class="card-header">
+          <h3>China&rarr;Bangkok Freight Forwarders</h3>
+          <span class="badge badge-awaiting">Awaiting</span>
+        </div>
+        <div class="card-detail"><strong>ID:</strong> <code>RFQ-GO-2026-04-FREIGHT</code></div>
+        <div class="card-detail"><strong>Vendors:</strong> 14 freight forwarders</div>
+        <div class="card-detail"><strong>Sent:</strong> 2026-04-10</div>
+        <div class="card-detail"><strong>Slack:</strong> #shipment-notifications</div>
+      </div>
+      <div class="rfq-card">
+        <div class="card-header">
+          <h3>V2H/V2G AC Wallbox EV Chargers</h3>
+          <span class="badge badge-awaiting">Awaiting</span>
+        </div>
+        <div class="card-detail"><strong>ID:</strong> <code>RFQ-GO-2026-04-EV-CHARGER</code></div>
+        <div class="card-detail"><strong>Vendors:</strong> 7 Chinese manufacturers</div>
+        <div class="card-detail"><strong>Sent:</strong> 2026-04-17</div>
+        <div class="card-detail"><strong>Slack:</strong> #areda-mike</div>
+        <div class="card-detail"><a href="wallbox-ev-charger-rfq.html">View dashboard &rarr;</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8-Step Pipeline -->
+  <div class="section">
+    <h2>8-Step Pipeline</h2>
+    <div class="pipeline">
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num manual">1</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type manual">Research &bull; Manual + AI</div>
+          <h3>Research &amp; Prepare Vendor List</h3>
+          <p>Source suppliers from Made-in-China, Alibaba, GlobalSources, ZoomInfo. Verify emails. Create a structured JSON with metadata, search criteria, and email verification notes.</p>
+          <div class="file-row">
+            <span class="file-chip">data/{category}_suppliers.json</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num manual">2</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type manual">Template &bull; Manual</div>
+          <h3>Create Procurement Template</h3>
+          <p>Define bilingual email body (<code>{vendor_name}</code>, <code>{deadline}</code>, <code>{title}</code> placeholders), extraction schema for Gemini to parse responses, and auto-reply context.</p>
+          <p><strong>Schema sections:</strong> rates (price, MOQ, lead time) + product_specs (model, power, certs) + capabilities (OEM, branding)</p>
+          <div class="file-row">
+            <span class="file-chip">scripts/seed_{category}_rfq.py</span>
+            <span class="tool-chip">Firestore: procurement_templates/{id}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num script">3</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type script">Seed &bull; Python Script</div>
+          <h3>Seed Firestore</h3>
+          <p>Run the seed script to create the template, inquiry, and vendor sub-documents. Also upserts each vendor into the master <code>vendor_directory</code>.</p>
+          <p><strong>Creates:</strong> template &rarr; inquiry (with send_config, scoring_config, automation_config) &rarr; N vendors</p>
+          <div class="file-row">
+            <span class="cmd-chip">python scripts/seed_{category}_rfq.py</span>
+          </div>
+          <div class="file-row" style="margin-top:0.4rem;">
+            <span class="tool-chip">rfq_inquiries/{id}</span>
+            <span class="tool-chip">rfq_inquiries/{id}/vendors/{vid}</span>
+            <span class="tool-chip">vendor_directory/{vid}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num script">4</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type script">Gmail &bull; Python Script</div>
+          <h3>Create Gmail Label + Filter</h3>
+          <p>Auto-label inbound replies from all vendor emails. Creates a nested label (e.g., <code>Suppliers/EV Charger</code>) and a filter matching all primary + alt contacts &rarr; apply label, never spam.</p>
+          <p><strong>Requires DWD:</strong> <code>gmail.labels</code> + <code>gmail.settings.basic</code></p>
+          <div class="file-row">
+            <span class="cmd-chip">python scripts/setup_gmail_{category}_filter.py</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num curl">5</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type curl">Dispatch &bull; Cloud Function</div>
+          <h3>Send RFQ</h3>
+          <p><strong>Always dry-run first.</strong> The Cloud Function renders the bilingual email from the template, sends via Gmail DWD, logs the message in Firestore, and posts a Slack notification to the inquiry's channel.</p>
+          <div class="file-row">
+            <span class="cmd-chip">POST /send-rfq {"inquiry_id":"...", "dry_run":true}</span>
+          </div>
+          <div class="file-row" style="margin-top:0.3rem;">
+            <span class="cmd-chip">POST /send-rfq {"inquiry_id":"..."}</span>
+          </div>
+          <div class="file-row" style="margin-top:0.4rem;">
+            <span class="tool-chip">send-rfq (Gen2, Python 3.12)</span>
+            <span class="tool-chip">Gmail API</span>
+            <span class="tool-chip">Slack API</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num manual">6</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type manual">Dashboard &bull; HTML</div>
+          <h3>Create Dashboard Page</h3>
+          <p>Public summary page on GitHub Pages: KPI cards, vendor shortlist with capabilities, automation timeline, infrastructure details. One page per RFQ round.</p>
+          <div class="file-row">
+            <span class="file-chip">business-automation/docs/{slug}.html</span>
+          </div>
+          <div class="file-row" style="margin-top:0.3rem;">
+            <span class="cmd-chip">https://eukrit.github.io/business-automation/{slug}.html</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num auto">7</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type auto">Monitor &bull; Fully Automated</div>
+          <h3>Automated Response Handling</h3>
+          <p>Runs 24/7 without intervention. Gmail Watch detects replies via Pub/Sub, Gemini classifies intent and extracts structured data, auto-reply engine responds to vendor questions, Slack notifications keep humans in the loop.</p>
+          <table class="info-table" style="margin-top:0.8rem;">
+            <tr><th>Component</th><th>Action</th><th>Trigger</th></tr>
+            <tr><td>Gmail Watch</td><td>Detect inbound reply</td><td>Pub/Sub topic</td></tr>
+            <tr><td>Gemini Classify</td><td>rate_quote / question / decline / partial / other</td><td>On new message</td></tr>
+            <tr><td>Gemini Extract</td><td>Parse rates, specs, capabilities from email</td><td>On rate_quote / partial</td></tr>
+            <tr><td>Gemini Auto-Reply</td><td>Draft contextual response to vendor question</td><td>On question (confidence-gated)</td></tr>
+            <tr><td>Slack Notify</td><td>Post to inquiry's channel</td><td>On every event</td></tr>
+            <tr><td>Reminder Cron</td><td>Follow-up Day 5, Day 7, escalate Day 10</td><td>Cloud Scheduler 09:00 ICT</td></tr>
+          </table>
+          <div class="file-row" style="margin-top:0.8rem;">
+            <span class="tool-chip">process-procurement-email</span>
+            <span class="tool-chip">rfq-reminder-cron</span>
+            <span class="tool-chip">Gemini 2.5 Flash</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num auto">8</div>
+          <div class="step-connector" style="background:transparent;"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-type auto">Compare &bull; MCP / REST</div>
+          <h3>Compare Rates &amp; Award</h3>
+          <p>Side-by-side rate comparison using the inquiry's <code>scoring_config</code> weights. Normalizes across trade terms (FOB, CIF, DDP). Available via MCP tool or REST API.</p>
+          <div class="file-row">
+            <span class="cmd-chip">MCP: compare_rates("RFQ-GO-...")</span>
+          </div>
+          <div class="file-row" style="margin-top:0.3rem;">
+            <span class="cmd-chip">GET /procurement-mcp/api/inquiries/{id}/compare</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Auto-Reply Decision Engine -->
+  <div class="section">
+    <h2>Auto-Reply Decision Engine</h2>
+    <div class="state-diagram">
+      <div class="state-label">Confidence-gated response handling</div>
+      <div class="state-row">
+        <div class="state-node state-sent">Inbound Email</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-auto">Gemini Classify</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-response">Gemini Extract Rates</div>
+      </div>
+      <div style="height:0.5rem;"></div>
+      <div class="state-row">
+        <div class="state-node state-auto" style="min-width:200px;">Vendor Asks Question</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-auto">Gemini Draft Reply</div>
+      </div>
+      <div style="height:0.3rem;"></div>
+      <div class="state-row" style="gap:1.5rem;">
+        <div>
+          <div class="state-label">Confidence &gt; 0.8</div>
+          <div class="state-node state-final">Auto-Send</div>
+        </div>
+        <div>
+          <div class="state-label">Confidence 0.6 &ndash; 0.8</div>
+          <div class="state-node state-escalate">Slack Approval</div>
+        </div>
+        <div>
+          <div class="state-label">Confidence &lt; 0.6</div>
+          <div class="state-node state-closed">Escalate to Human</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor State Machine -->
+  <div class="section">
+    <h2>Vendor Status State Machine</h2>
+    <div class="state-diagram">
+      <div class="state-row">
+        <div class="state-node state-draft">draft</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-sent">sent</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-response">response_received</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-response">complete_response</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-auto">evaluating</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-final">awarded</div>
+      </div>
+      <div style="height:0.8rem;"></div>
+      <div class="state-label">Reminder path (non-responsive vendors)</div>
+      <div class="state-row">
+        <div class="state-node state-sent">sent</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-escalate">reminder_1 (Day 5)</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-escalate">reminder_2 (Day 7)</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-closed">escalated (Day 10)</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-closed">closed</div>
+      </div>
+      <div style="height:0.8rem;"></div>
+      <div class="state-label">Auto-reply path (partial responses / questions)</div>
+      <div class="state-row">
+        <div class="state-node state-response">partial_response</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-auto">auto-reply</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-sent">awaiting_response</div>
+        <div class="state-arrow">&rarr;</div>
+        <div class="state-node state-response">response_received</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Naming Conventions -->
+  <div class="section">
+    <h2>Naming Conventions</h2>
+    <div class="naming-grid">
+      <div class="naming-item">
+        <div class="nm-label">Inquiry ID</div>
+        <div class="nm-pattern">RFQ-GO-{YYYY}-{MM}-{CATEGORY}</div>
+        <div class="nm-example">e.g. RFQ-GO-2026-04-EV-CHARGER</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Template ID</div>
+        <div class="nm-pattern">{category}-{subcategory}-rfq-v{N}</div>
+        <div class="nm-example">e.g. ev-charger-rfq-v1</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Vendor ID</div>
+        <div class="nm-pattern">slugified company name</div>
+        <div class="nm-example">e.g. shenzhen-infypower-co-ltd</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Vendor JSON</div>
+        <div class="nm-pattern">data/{category}_suppliers.json</div>
+        <div class="nm-example">e.g. data/china_ev_charger_suppliers.json</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Seed Script</div>
+        <div class="nm-pattern">scripts/seed_{category}_rfq.py</div>
+        <div class="nm-example">e.g. scripts/seed_ev_charger_rfq.py</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Gmail Filter</div>
+        <div class="nm-pattern">scripts/setup_gmail_{category}_filter.py</div>
+        <div class="nm-example">e.g. scripts/setup_gmail_ev_charger_filter.py</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Dashboard Page</div>
+        <div class="nm-pattern">business-automation/docs/{slug}.html</div>
+        <div class="nm-example">e.g. wallbox-ev-charger-rfq.html</div>
+      </div>
+      <div class="naming-item">
+        <div class="nm-label">Slack Channel</div>
+        <div class="nm-pattern">Per-inquiry override in automation_config</div>
+        <div class="nm-example">e.g. #areda-mike (C0AC8GK12N6)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Escalation -->
+  <div class="section">
+    <h2>Escalation Keywords</h2>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.5rem;">These words in vendor replies always trigger human escalation via Slack, regardless of confidence score:</p>
+    <div class="kw-row">
+      <span class="kw-chip">exclusive</span>
+      <span class="kw-chip">minimum commitment</span>
+      <span class="kw-chip">penalty</span>
+      <span class="kw-chip">contract</span>
+      <span class="kw-chip">NDA</span>
+      <span class="kw-chip">legal</span>
+      <span class="kw-chip">binding</span>
+      <span class="kw-chip">liability</span>
+      <span class="kw-chip">indemnity</span>
+    </div>
+  </div>
+
+  <!-- Infrastructure -->
+  <div class="section">
+    <h2>Infrastructure</h2>
+    <table class="info-table">
+      <tr><th>Component</th><th>Detail</th></tr>
+      <tr><td>Cloud Functions</td><td><code>send-rfq</code> &bull; <code>process-procurement-email</code> &bull; <code>rfq-reminder-cron</code></td></tr>
+      <tr><td>Runtime</td><td>Python 3.12, Gen2, us-central1</td></tr>
+      <tr><td>Firestore DB</td><td><code>procurement-automation</code> (named, asia-southeast1)</td></tr>
+      <tr><td>AI Engine</td><td>Gemini 2.5 Flash &mdash; classify, extract, auto-reply (temp 0.0, JSON mode)</td></tr>
+      <tr><td>Gmail</td><td>DWD via <code>claude@ai-agents-go</code> SA, impersonate <code>eukrit@goco.bz</code></td></tr>
+      <tr><td>Slack Bot</td><td><code>ai_agents</code> &mdash; per-inquiry channel routing</td></tr>
+      <tr><td>Cloud Scheduler</td><td>Daily 09:00 ICT &rarr; <code>rfq-reminder-cron</code></td></tr>
+      <tr><td>Secrets</td><td><code>gmail-service-account</code> &bull; <code>slack-bot-token</code> (Secret Manager)</td></tr>
+      <tr><td>Service Account</td><td><code>claude@ai-agents-go.iam.gserviceaccount.com</code></td></tr>
+      <tr><td>Repo</td><td><a href="https://github.com/eukrit/procurement-automation">eukrit/procurement-automation</a></td></tr>
+    </table>
+  </div>
+
+  <!-- Quick Reference -->
+  <div class="section">
+    <h2>Quick Reference</h2>
+    <table class="info-table">
+      <tr><th>Action</th><th>Command</th></tr>
+      <tr><td>Seed Firestore</td><td><code>python scripts/seed_{category}_rfq.py</code></td></tr>
+      <tr><td>Create Gmail filter</td><td><code>python scripts/setup_gmail_{category}_filter.py</code></td></tr>
+      <tr><td>Dry-run RFQ</td><td><code>POST /send-rfq {"inquiry_id":"...", "dry_run":true}</code></td></tr>
+      <tr><td>Send RFQ</td><td><code>POST /send-rfq {"inquiry_id":"..."}</code></td></tr>
+      <tr><td>Check status</td><td><code>MCP: get_inquiry_status("...")</code></td></tr>
+      <tr><td>Compare rates</td><td><code>MCP: compare_rates("...")</code></td></tr>
+      <tr><td>Send reminder</td><td><code>MCP: send_vendor_reminder("...", "vendor-id")</code></td></tr>
+      <tr><td>Refresh Gmail watch</td><td><code>python scripts/setup_gmail_watch.py</code></td></tr>
+      <tr><td>Process replies</td><td><code>python scripts/process_replies.py</code></td></tr>
+      <tr><td>Manual reminder cron</td><td><code>POST /rfq-reminder-cron {"inquiry_id":"..."}</code></td></tr>
+    </table>
+  </div>
+
+  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:2rem;">
+    GO Corporation &bull; Procurement Automation Engine &bull; Updated 2026-04-17
+  </p>
+
+</div>
+</body>
+</html>
