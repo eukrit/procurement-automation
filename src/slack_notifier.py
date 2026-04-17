@@ -32,7 +32,7 @@ def _get_slack_token() -> str:
         return token
     try:
         client = secretmanager.SecretManagerServiceClient()
-        name = f"projects/{GCP_PROJECT}/secrets/SLACK_BOT_TOKEN/versions/latest"
+        name = f"projects/{GCP_PROJECT}/secrets/slack-bot-token/versions/latest"
         response = client.access_secret_version(request={"name": name})
         return response.payload.data.decode("utf-8").strip()
     except Exception as e:

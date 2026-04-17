@@ -33,6 +33,7 @@ steps:
       - --memory=512Mi
       - --timeout=120s
       - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true
+      - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest
 
   # Service 3: Reminder cron (HTTP, invoked by Cloud Scheduler) — Phase 4
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -51,3 +52,4 @@ steps:
       - --memory=256Mi
       - --timeout=120s
       - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,SLACK_CHANNEL=C08VD9PRSCU
+      - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest
