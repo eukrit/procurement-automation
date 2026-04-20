@@ -4,6 +4,19 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.1.0] — 2026-04-20
+
+### Added — Rice Export RFQ: Thai Call-Me Follow-up
+- `scripts/send_rice_call_followup.py` — Sends a simple Thai follow-up to every
+  silent Rice Export RFQ vendor (status=`sent`), replying in the existing Gmail
+  thread and asking the recipient to call +66 61 491 6393 for further discussion.
+- Logs each outbound as a `follow_up_call` message, bumps the vendor status to
+  `reminder_1`, and increments `reminders.count`.
+- Executed against inquiry `RFQ-GO-2026-04-RICE-EXPORT` on 2026-04-20 —
+  12 / 12 silent vendors received the follow-up.
+
+---
+
 ## [v1.0.0] — 2026-04-06
 
 ### Added — Phase 1: Firestore Schema + Seed Vendors
