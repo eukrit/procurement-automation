@@ -125,6 +125,14 @@ def build_blocks(buyer_address):
 
     blocks = [
         callout("เอกสารนี้เป็นใบขอเสนอราคา (RFQ) สำหรับข้าวขาวไทย 5% หัก สำหรับส่งออกไปยังจีน ปริมาณ 200,000 เมตริกตัน", "🍚"),
+        callout(
+            "⚠️ ต้องการราคาดีที่สุดภายในวันนี้ — กรุณาส่งใบเสนอราคาพร้อมรูปถ่ายบรรจุภัณฑ์จริง "
+            "(ตัวอย่างกระสอบ, การพิมพ์ยี่ห้อ, มาตรฐานการบรรจุ) และเอกสารมาตรฐานที่เกี่ยวข้องทั้งหมด "
+            "ภายในวันนี้ // We need your BEST PRICE today — please include photos of your actual "
+            "packaging (bag samples, printing/branding, packing standards) and all relevant "
+            "standards/spec sheets in your reply.",
+            "🚨"
+        ),
         divider(),
 
         heading1("ใบขอเสนอราคา (Request for Quotation)"),
