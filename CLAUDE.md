@@ -1,5 +1,9 @@
 # Procurement Automation — Claude Code Instructions
 
+> **Session start protocol (Rule 6):** read `.claude/PROGRESS.md` and `PROJECT_INDEX.md` before making changes. Check `COLLABORATORS.md` and `SECURITY.md` before granting access. Update `.claude/PROGRESS.md` before ending any turn that edited code.
+
+> **Primary GCP project: `ai-agents-go`** (538978391890, region `asia-southeast1`). Do NOT use `ai-agents-eukrit` — that project is reserved for the `2026 Eukrit Expenses Claude/` folder only.
+
 ## Project Overview
 AI-powered procurement automation for GO Corporation. Manages RFQ workflows, vendor sourcing, rate comparison, and automated follow-ups across any procurement category. Core engine: Gemini 2.5 Flash + Gmail + Firestore.
 
