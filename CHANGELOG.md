@@ -4,6 +4,27 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.2.0] — 2026-04-21
+
+### Added — Rice Export RFQ: Thai Notion RFQ Page
+- `scripts/create_notion_rfq_rice.py` — Creates a fully-formatted Thai RFQ page
+  in Notion under the Nubo International parent page. Posts product spec tables,
+  quality spec, pricing tiers by contract length, certification list, and reply
+  instructions.
+- Quantity locked to 200 MT/month (~2,400 MT/year over a 12-month contract),
+  with pricing tiers at 1 / 3 / 6 / 12 months.
+- Packaging locked to 25 kg new PP bags only — vendors asked to send actual
+  bag photos, branding/printing, and packing standards.
+- 🚨 Urgent callout at top of page: BEST PRICE required by end-of-business today
+  (21 April 2026, 18:00), bilingual Thai/English.
+- Buyer contact corrected to Eukrit Kraikosol; buyer address baked in as
+  fallback constant (`BUYER_ADDRESS_FALLBACK`) when the integration can't
+  access the Nubo International Address sub-page.
+- Executed 2026-04-21 — live page:
+  https://www.notion.so/RFQ-5-200-MT-34982cea8bb081c29f25f580990b5a06
+
+---
+
 ## [v1.1.0] — 2026-04-20
 
 ### Added — Rice Export RFQ: Thai Call-Me Follow-up
