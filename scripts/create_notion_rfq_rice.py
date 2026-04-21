@@ -23,10 +23,17 @@ ADDRESS_PAGE_ID = "23082cea8bb080619450cf4506dd615f"
 
 BUYER = {
     "name": "Nubo International Pte. Ltd.",
-    "contact_name": "Eukrit Sae-Lim",
+    "contact_name": "Eukrit Kraikosol",
     "email": "eukrit@nubo.asia",
     "mobile": "+66 61 491 6393",
 }
+
+BUYER_ADDRESS_FALLBACK = (
+    "Nubo International Pte. Ltd., 20 Jalan Mutiara, Singapore 249199 | "
+    "Business Registration ID: 202424115G | "
+    "Contacts: Eukrit Kraikosol +66 61 491 6393 eukrit@nubo.asia; "
+    "Edmund Lim +65 9191 1192 edmund@nubo.asia"
+)
 
 
 def get_token():
@@ -121,22 +128,22 @@ def table(headers_row, rows):
 
 def build_blocks(buyer_address):
     today = "21 เมษายน 2569"
-    deadline = "10 พฤษภาคม 2569"
+    deadline = "วันนี้ 21 เมษายน 2569 ก่อน 18:00 น. (URGENT — TODAY)"
 
     blocks = [
-        callout("เอกสารนี้เป็นใบขอเสนอราคา (RFQ) สำหรับข้าวขาวไทย 5% หัก สำหรับส่งออกไปยังจีน ปริมาณ 200,000 เมตริกตัน", "🍚"),
+        callout("เอกสารนี้เป็นใบขอเสนอราคา (RFQ) สำหรับข้าวขาวไทย 5% หัก สำหรับส่งออกไปยังจีน ปริมาณ 200 เมตริกตันต่อเดือน (200 MT/month, สัญญา 12 เดือน รวม ~2,400 MT/ปี)", "🍚"),
         callout(
-            "⚠️ ต้องการราคาดีที่สุดภายในวันนี้ — กรุณาส่งใบเสนอราคาพร้อมรูปถ่ายบรรจุภัณฑ์จริง "
-            "(ตัวอย่างกระสอบ, การพิมพ์ยี่ห้อ, มาตรฐานการบรรจุ) และเอกสารมาตรฐานที่เกี่ยวข้องทั้งหมด "
-            "ภายในวันนี้ // We need your BEST PRICE today — please include photos of your actual "
-            "packaging (bag samples, printing/branding, packing standards) and all relevant "
-            "standards/spec sheets in your reply.",
+            "🚨 ด่วนที่สุด — ต้องการราคาดีที่สุด (BEST PRICE) ภายในวันนี้ 21 เมษายน 2569 ก่อน 18:00 น. "
+            "กรุณาส่งใบเสนอราคาพร้อมรูปถ่ายบรรจุภัณฑ์จริง (ตัวอย่างกระสอบ, การพิมพ์ยี่ห้อ, มาตรฐานการบรรจุ) "
+            "และเอกสารมาตรฐานที่เกี่ยวข้องทั้งหมด ภายในวันนี้ // URGENT: We need your BEST PRICE by END OF "
+            "BUSINESS TODAY (21 April 2026). Please include photos of your actual packaging (bag samples, "
+            "printing/branding, packing standards) and all relevant standards/spec sheets in your reply TODAY.",
             "🚨"
         ),
         divider(),
 
         heading1("ใบขอเสนอราคา (Request for Quotation)"),
-        heading2("ข้าวขาวไทย 5% หัก — ส่งออกไปยังสาธารณรัฐประชาชนจีน"),
+        heading2("ข้าวขาวไทย 5% หัก — ส่งออกไปยังสาธารณรัฐประชาชนจีน (200 MT/เดือน)"),
         divider(),
 
         # Reference info
@@ -174,10 +181,12 @@ def build_blocks(buyer_address):
                 ["ชนิดสินค้า", "ข้าวขาวไทย 5% หัก (Thai White Rice 5% Broken)"],
                 ["มาตรฐาน", "มาตรฐานข้าวไทย / RFL Standard"],
                 ["ระดับการสี", "สีดี (Well Milled)"],
-                ["ปริมาณรวม", "200,000 เมตริกตัน"],
-                ["วิธีส่งมอบ", "แบ่งส่งมอบเป็นงวด (ประมาณ 12 เดือน)"],
+                ["ปริมาณ", "200 เมตริกตัน / เดือน (200 MT/month)"],
+                ["ปริมาณรวมต่อปี", "~2,400 เมตริกตัน (สัญญา 12 เดือน, ต่ออายุได้)"],
+                ["วิธีส่งมอบ", "ส่งมอบรายเดือน งวดละ 200 MT (monthly shipments)"],
                 ["ปลายทาง", "ท่าเรือในประเทศจีน (กว่างโจว / เซี่ยงไฮ้ / เทียนจิน)"],
                 ["ท่าเรือต้นทาง", "กรุงเทพฯ (คลองเตย) / แหลมฉบัง / ศรีราชา"],
+                ["บรรจุภัณฑ์", "กระสอบ PP ใหม่ 25 กก. เท่านั้น (25 kg new PP bags only)"],
             ]
         ),
         divider(),
@@ -205,9 +214,9 @@ def build_blocks(buyer_address):
         heading3("ข้อมูลที่ต้องการจากผู้ขาย"),
         bullet("ราคา FOB (ท่าเรือไทย) ต่อเมตริกตัน — USD/MT"),
         bullet("ราคา CIF (ท่าเรือจีน) ต่อเมตริกตัน — USD/MT (ถ้ามี)"),
-        bullet("ราคาแบ่งตามปริมาณ: 10,000 / 50,000 / 100,000 / 200,000 MT"),
+        bullet("ราคาแบ่งตามระยะสัญญา (ที่ 200 MT/เดือน): 1 เดือน / 3 เดือน / 6 เดือน / 12 เดือน"),
         bullet("กำหนดส่งมอบ (จากวันสั่งซื้อถึงถึงท่าเรือจีน)"),
-        bullet("บรรจุภัณฑ์ — กระสอบ PP ใหม่ 25 กก. หรือ 50 กก. / bulk"),
+        bullet("บรรจุภัณฑ์ — กระสอบ PP ใหม่ 25 กก. เท่านั้น (25 kg bags only) — กรุณาส่งรูปถ่ายกระสอบจริงและสเปคการพิมพ์"),
         bullet("เงื่อนไขการชำระเงิน — L/C at sight / T/T 30%+70% B/L / อื่นๆ"),
         bullet("ใบรับรอง: GACC, Phytosanitary Certificate, Certificate of Origin, SGS/Intertek"),
         bullet("กำลังการผลิต — ตันต่อเดือน และระยะเวลาสัญญา"),
@@ -217,12 +226,12 @@ def build_blocks(buyer_address):
         # Pricing table (blank for vendor to fill)
         heading3("ตารางเสนอราคา (กรุณากรอก)"),
         table(
-            ["ปริมาณ (MT)", "ราคา FOB (USD/MT)", "ราคา CIF (USD/MT)", "Incoterm", "หมายเหตุ"],
+            ["ระยะสัญญา", "ปริมาณรวม (MT)", "ราคา FOB (USD/MT)", "ราคา CIF (USD/MT)", "Incoterm", "หมายเหตุ"],
             [
-                ["10,000", "", "", "", ""],
-                ["50,000", "", "", "", ""],
-                ["100,000", "", "", "", ""],
-                ["200,000", "", "", "", ""],
+                ["1 เดือน (spot)", "200", "", "", "", ""],
+                ["3 เดือน", "600", "", "", "", ""],
+                ["6 เดือน", "1,200", "", "", "", ""],
+                ["12 เดือน", "2,400", "", "", "", ""],
             ]
         ),
         divider(),
@@ -257,7 +266,7 @@ def create_page(token, buyer_address):
         "cover": None,
         "properties": {
             "title": {
-                "title": [{"type": "text", "text": {"content": "RFQ — ข้าวขาวไทย 5% หัก ส่งออกจีน 200,000 MT"}}]
+                "title": [{"type": "text", "text": {"content": "RFQ — ข้าวขาวไทย 5% หัก ส่งออกจีน 200 MT/เดือน"}}]
             }
         },
         "children": build_blocks(buyer_address),
@@ -285,8 +294,8 @@ def main():
     if address_text:
         print(f"   Address found: {address_text[:80]}...")
     else:
-        print("   Address page not accessible — using placeholder")
-        address_text = "ดูหน้า Nubo International Address ใน Notion"
+        print("   Address page not accessible via API — using cached address")
+        address_text = BUYER_ADDRESS_FALLBACK
 
     print("📝 Creating RFQ Rice Inquiry page...")
     create_page(token, address_text)
