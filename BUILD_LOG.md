@@ -4,6 +4,40 @@ _Semver, dated entries. One section per version._
 
 ---
 
+## [0.2.1-research.2] — 2026-04-22
+
+**Summary:** Added Qbic Technology TD-1060 Slim (Taiwan) as vendor #6 to the PoE display supplier list. Wrote seed + dispatch scripts for all 6 vendors (5 Shenzhen OEMs + Qbic). Added bilingual (EN+CN) RFQ email for Chinese vendors and English-only for Qbic.
+
+**Branch:** `claude/research-led-poe-alternatives-SIbjj`
+
+**Files changed:**
+- `data/china_poe_touch_displays.json` — added Qbic Technology as vendor #6 (Taiwan); updated total_companies to 6; expanded description
+- `scripts/seed_poe_display_rfq.py` — new: seeds Firestore with inquiry, template, and all 6 vendors for `RFQ-GO-2026-04-POE-DISPLAY`
+- `scripts/send_poe_display_rfq.py` — new: dispatches initial RFQ emails to all 6 vendors; bilingual EN+CN for Chinese OEMs, English-only for Qbic; logs to Firestore; `--dry` preview flag
+- `BUILD_LOG.md` — this entry
+
+**Qbic TD-1060 Slim key specs vs Philips baseline:**
+- 350 nits (EXCEEDS Philips 300 nits)
+- 1000:1 contrast (EXCEEDS Philips 500:1)
+- 10-point PCAP touch (EXCEEDS Philips 5-point)
+- LED light bar, 20.8 mm slim profile
+- Android 8.1 (parity), PoE+ (parity), WiFi 802.11ac dual-band (better than Philips)
+- Taiwan-brand quality; integrated with SOTI MDM, Flowscape, TigerMeeting room-booking platforms
+
+**To run (from local machine with credentials):**
+```bash
+python scripts/seed_poe_display_rfq.py --dry     # verify 6 vendors
+python scripts/seed_poe_display_rfq.py            # write to Firestore
+python scripts/send_poe_display_rfq.py --dry      # preview emails
+python scripts/send_poe_display_rfq.py            # live send
+```
+
+**Outcome:** 6 RFQ send scripts ready. Run from local machine with GOOGLE_APPLICATION_CREDENTIALS set.
+
+**Co-Authored-By:** Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+---
+
 ## [0.2.0-research.1] — 2026-04-22
 
 **Summary:** Added research deliverable — Chinese supplier shortlist for 10" PoE Android multi-touch signage displays as replacements for the discontinued Philips 10BDL3051T/00 (and successor 10BDL4551T/00). 12-pc procurement target.

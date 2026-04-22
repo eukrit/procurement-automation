@@ -29,20 +29,17 @@
 
   <h2>Latest build</h2>
   <p>
-    Version <strong>v0.2.0-research.1</strong> ·
-    <span class="badge badge-success">delivered</span>
+    Version <strong>v0.2.1-research.2</strong> ·
+    <span class="badge badge-success">ready-to-send</span>
   </p>
   <p>
-    Research deliverable — Chinese alternatives to the discontinued
-    Philips Signage Solutions <code>10BDL3051T/00</code> (and successor
-    <code>10BDL4551T/00</code>) 10" PoE Android multi-touch display, target
-    qty 12 pcs. Five Shenzhen manufacturers shortlisted
-    (<strong>ELC Sign</strong>, <strong>MIO-LCD</strong>, <strong>RAYPODO</strong>,
-    <strong>AIYOS</strong>, <strong>HDFocus</strong>) with full specs,
-    certifications, FOB estimates, and a 12-pc landed-cost budget
-    (~USD 1.8k–3.8k vs ~USD 7.2k–9.6k for Philips retail equivalent).
-    Report: <a href="docs/research/Philips-10BDL3051T-alternatives.md">docs/research/Philips-10BDL3051T-alternatives.md</a> ·
-    Structured data: <a href="data/china_poe_touch_displays.json">data/china_poe_touch_displays.json</a>.
+    Added <strong>Qbic Technology TD-1060 Slim</strong> (Taiwan) as vendor #6.
+    Wrote seed + dispatch scripts for all 6 vendors
+    (ELC Sign, MIO-LCD, RAYPODO, AIYOS, HDFocus + Qbic).
+    Bilingual EN+CN emails for Chinese OEMs; English-only for Qbic.
+    Contact block includes WhatsApp <code>+66 61 491 6393</code> and WeChat ID <code>eukrit</code>.
+    Run from local machine: <code>python scripts/seed_poe_display_rfq.py</code>
+    then <code>python scripts/send_poe_display_rfq.py</code>.
   </p>
   <p>
     <a href="CHANGELOG.md">Full changelog</a>
@@ -52,6 +49,12 @@
   <table>
     <thead><tr><th>Version</th><th>Date</th><th>Summary</th><th>Status</th></tr></thead>
     <tbody>
+      <tr>
+        <td>v0.2.1-research.2</td>
+        <td>2026-04-22</td>
+        <td>Added Qbic TD-1060 Slim (Taiwan) as vendor #6. Seed + dispatch scripts for all 6 vendors. Bilingual RFQ emails with WhatsApp/WeChat contact.</td>
+        <td><span class="badge badge-success">ready-to-send</span></td>
+      </tr>
       <tr>
         <td>v0.2.0-research.1</td>
         <td>2026-04-22</td>
