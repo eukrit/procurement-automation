@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 IMPERSONATE_USER = os.environ.get("IMPERSONATE_USER", "eukrit@goco.bz")
 
 _DEFAULT_KEY_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "ai-agents-go-4c81b70995db.json"
+    os.path.dirname(__file__), "..", "ai-agents-go-9b4219be8c01.json"
 )
 
 

@@ -56,7 +56,7 @@ _client = None
 
 SA_KEY_FILE = os.environ.get(
     "GOOGLE_APPLICATION_CREDENTIALS",
-    os.path.join(os.path.dirname(__file__), "..", "..", "ai-agents-go-4c81b70995db.json"),
+    os.path.join(os.path.dirname(__file__), "..", "..", "ai-agents-go-9b4219be8c01.json"),
 )
 
 
