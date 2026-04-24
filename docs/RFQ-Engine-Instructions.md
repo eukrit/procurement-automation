@@ -7,6 +7,12 @@ This procurement automation platform handles the full RFQ lifecycle for **any pr
 **Completed RFQs:**
 - `RFQ-GO-2026-04-FREIGHT` — China→Bangkok freight forwarders (14 vendors)
 - `RFQ-GO-2026-04-EV-CHARGER` — V2H/V2G AC wallbox (7 vendors) — [Dashboard](https://eukrit.github.io/business-automation/wallbox-ev-charger-rfq.html)
+- `RFQ-GO-2026-04-RICE-EXPORT` — Thai white rice 5% broken, China export (12 vendors)
+- `RFQ-GO-2026-04-SOLAR-SLEWING` — SDE9 dual-axis solar tracker slewing drives (7 vendors) — v1.3.0
+- `RFQ-GO-2026-04-POE-DISPLAY` — 10.1" Android PoE+ multi-touch displays (6 vendors)
+- `RFQ-GO-2026-04-SOLAR-PV` — Back Contact (IBC/ABC/HBC/HPBC) solar PV modules, ~10 kW pilot + container/MW scale-up (15 vendors, deadline 2026-05-15) — v1.5.0
+
+**Live master dashboard (Firestore-backed, auto-updates):** https://rfq-dashboard-538978391890.asia-southeast1.run.app/
 
 ## Prerequisites
 
