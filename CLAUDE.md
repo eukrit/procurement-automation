@@ -7,6 +7,14 @@
 ## Project Overview
 AI-powered procurement automation for GO Corporation. Manages RFQ workflows, vendor sourcing, rate comparison, and automated follow-ups across any procurement category. Core engine: Gemini 2.5 Flash + Gmail + Firestore.
 
+## Primary Contact (include in all outbound RFQ emails)
+**Eukrit Kraikosol | เอกฤทธิ์ ไกรโกศล**
+- Email: eukrit@goco.bz
+- WhatsApp: +66614916393
+- WeChat ID: eukrit
+- Company: GO Corporation Co., Ltd. | บริษัท จีโอ คอร์ปอเรชั่น จำกัด
+- Address: 11/2 P23 Tower, Unit 8A, Sukhumvit 23, Bangkok 10110, Thailand
+
 ## Key Rules
 
 ### Code Control

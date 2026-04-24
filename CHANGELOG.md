@@ -4,6 +4,30 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.3.0] — 2026-04-24
+
+### Added — PoE Display RFQ: 6-vendor dispatch + Gmail filter + Slack notifications
+
+- `scripts/seed_poe_display_rfq.py` — Seeds Firestore inquiry `RFQ-GO-2026-04-POE-DISPLAY`,
+  template, and 6 vendor records (5 Shenzhen OEMs + Qbic Technology, Taiwan).
+  Slack channel updated to `#areda-mike` (C0AC8GK12N6).
+- `scripts/send_poe_display_rfq.py` — Dispatches bilingual EN+CN RFQ emails to
+  5 China OEMs and English-only to Qbic. Includes Eukrit Kraikosol contact details
+  (eukrit@goco.bz, WhatsApp +66614916393, WeChat eukrit) in every email.
+  Posts per-vendor send notification + dispatch summary to Slack `#areda-mike`.
+- `scripts/setup_poe_display_gmail_filter.py` — Creates Gmail label `Suppliers/LED`
+  and 9 per-vendor filters (from: each vendor email) to auto-label inbound replies.
+- `data/china_poe_touch_displays.json` — 6-vendor shortlist (ELC Sign, MIO-LCD,
+  RAYPODO, AIYOS, HDFocus, Qbic) as alternatives to discontinued Philips 10BDL3051T/00.
+- `CLAUDE.md` — Added Primary Contact section (Eukrit Kraikosol, contact details).
+
+### Executed (2026-04-24)
+- Seeded Firestore `procurement-automation` with inquiry + template + 6 vendors.
+- Created Gmail label `Suppliers/LED` (id=Label_517) + 9 filters on eukrit@goco.bz.
+- Sent 6 RFQ emails; deadline 6 May 2026; Slack #areda-mike notified.
+
+---
+
 ## [v1.2.0] — 2026-04-21
 
 ### Added — Rice Export RFQ: Thai Notion RFQ Page
