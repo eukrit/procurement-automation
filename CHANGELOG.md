@@ -4,6 +4,45 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.5.0] — 2026-04-24
+
+### Added — Solar PV (Back Contact) RFQ: `RFQ-GO-2026-04-SOLAR-PV`
+- `data/china_solar_pv_suppliers.json` — 15 Chinese Tier-1 PV manufacturers,
+  focused on Back Contact cell technology (Aiko ABC, LONGi HIBC / HPBC,
+  Maxeon IBC, Huansheng HBC, Xi'an SPIC HBC, DAS XBC, Akcome HJT-IBC,
+  GS-Solar HBC) with premium N-type alternates (Trina, JinkoSolar, JA,
+  Canadian, Risen HJT, Tongwei HJT, Jolywood n-TOPCon).
+- `scripts/seed_solar_pv_rfq.py` — seeds `procurement_templates/solar-pv-rfq-v1`
+  (bilingual EN/CN body), inquiry `RFQ-GO-2026-04-SOLAR-PV`, and 15 vendors
+  into `vendor_directory`. Pilot quantity ~18 panels (~10 kW) + tiered
+  container / 100 kW / 500 kW / 1 MW pricing. Requests full cert list
+  (IEC 61215/61730, CE, TÜV, UL, MCS, JET, CEC, Thai MEA/PEA/TISI),
+  datasheets, and sample pricing.
+- `scripts/setup_gmail_solar_pv_filter.py` — extends the shared Gmail
+  label `Suppliers/Solar` (created in v1.3.0 for slewing-drive vendors)
+  with a PV-module `from:` filter across all 30 vendor addresses.
+- `scripts/dry_run_solar_rfq.py` — rendered-body preview (no writes, no
+  sends) used for user approval before dispatch.
+- Deadline `2026-05-15` (Fri after China Golden Week — pushed out from
+  default 2-week window to avoid May 1–5 factory shutdown).
+- Slack routing override: `#areda-mike` (per-inquiry override on the
+  inquiry doc).
+- Reply-To `procurement@goco.bz`; From `eukrit@goco.bz`.
+- Executed 2026-04-24 — dispatched via `https://send-rfq-rg5gmtwrfa-uc.a.run.app`:
+  **15 sent, 0 skipped, 0 errors**. Slack dispatch summary posted manually
+  to `#areda-mike` (Cloud Function's auto-notify silently no-op'd this
+  time — follow-up task to investigate).
+- ⚠️ All 30 vendor emails are domain-inferred (not verified personal
+  contacts) — bounces expected; triage on reply.
+
+### Follow-up tasks (not in this commit)
+- Investigate why `notify_rfq_dispatched` didn't post to `#areda-mike`
+  for this dispatch (POE-DISPLAY earlier the same day did post).
+- Verify top-5 vendor contacts (Aiko, LONGi, Maxeon, DAS, Trina) against
+  current contact pages to reduce bounce rate on next dispatch.
+
+---
+
 ## [v1.4.0] — 2026-04-24
 
 ### Added — Master RFQ Dashboard (Cloud Run)
