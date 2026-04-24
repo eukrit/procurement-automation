@@ -4,6 +4,29 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.3.0] — 2026-04-24
+
+### Added — Master RFQ Dashboard (Cloud Run)
+- `dashboard/main.py` — Flask app serving a live master RFQ dashboard that
+  reads `rfq_inquiries` + `vendors` subcollections from Firestore
+  (`procurement-automation` database) and renders:
+  - Root `/`: KPI strip (projects / active / vendors / responses) + directory
+    of every RFQ project with status badge, response progress bar, and
+    deadline countdown.
+  - `/rfq/<inquiry_id>`: Per-project detail page with metadata panel and full
+    vendor table (company, email, status, latest rates, last update).
+  - `/api/inquiries`: JSON API for the same data.
+  - `/healthz`: health probe.
+- `dashboard/Dockerfile`, `dashboard/requirements.txt` — gunicorn + Flask +
+  `google-cloud-firestore`.
+- Deployed to Cloud Run `rfq-dashboard` (asia-southeast1, service account
+  `claude@ai-agents-go.iam.gserviceaccount.com`, public/unauth'd).
+- **Live URL:** https://rfq-dashboard-538978391890.asia-southeast1.run.app
+- Smoke-tested 2026-04-24: HTTP 200, 5 RFQ projects listed (FREIGHT,
+  RICE-EXPORT, EV-CHARGER, POE-DISPLAY, SOLAR-SLEWING).
+
+---
+
 ## [v1.2.0] — 2026-04-21
 
 ### Added — Rice Export RFQ: Thai Notion RFQ Page

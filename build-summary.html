@@ -24,21 +24,23 @@
   <div class="meta">
     Repo: <a href="https://github.com/eukrit/procurement-automation">https://github.com/eukrit/procurement-automation</a> ·
     Branch: <code>main</code> ·
-    Last updated: 2026-04-20
+    Last updated: 2026-04-24
   </div>
 
   <h2>Latest build</h2>
   <p>
-    Version <strong>v1.1.0</strong> ·
-    <span class="badge badge-success">sent</span>
+    Version <strong>v1.3.0</strong> ·
+    <span class="badge badge-success">deployed</span>
   </p>
   <p>
-    Rice Export RFQ — Thai call-me follow-up dispatched to all 12 silent vendors on
-    inquiry <code>RFQ-GO-2026-04-RICE-EXPORT</code>. New script
-    <code>scripts/send_rice_call_followup.py</code> replies in each existing Gmail
-    thread with a simple Thai message asking the recipient to call
-    <strong>061-491-6393</strong> for further discussion. Vendors advanced to
-    <code>reminder_1</code>; <code>reminders.count</code> incremented.
+    Master RFQ Dashboard live on Cloud Run. New Flask app under
+    <code>dashboard/</code> reads <code>rfq_inquiries</code> + <code>vendors</code>
+    subcollections from Firestore (<code>procurement-automation</code>) and renders a
+    KPI strip, directory of all RFQ projects, per-project detail pages (metadata
+    panel + vendor table), and a JSON API.
+    <br />
+    Service: <code>rfq-dashboard</code> · Region: <code>asia-southeast1</code> ·
+    URL: <a href="https://rfq-dashboard-538978391890.asia-southeast1.run.app">https://rfq-dashboard-538978391890.asia-southeast1.run.app</a>
   </p>
   <p>
     <a href="CHANGELOG.md">Full changelog</a>
@@ -48,6 +50,18 @@
   <table>
     <thead><tr><th>Version</th><th>Date</th><th>Summary</th><th>Status</th></tr></thead>
     <tbody>
+      <tr>
+        <td>v1.3.0</td>
+        <td>2026-04-24</td>
+        <td>Master RFQ Dashboard deployed to Cloud Run (rfq-dashboard, asia-southeast1) — live Firestore-backed directory of all RFQ projects.</td>
+        <td><span class="badge badge-success">deployed</span></td>
+      </tr>
+      <tr>
+        <td>v1.2.0</td>
+        <td>2026-04-21</td>
+        <td>Rice Export RFQ — Thai Notion page (200 MT/month, 25kg bags, urgent callout).</td>
+        <td><span class="badge badge-success">sent</span></td>
+      </tr>
       <tr>
         <td>v1.1.0</td>
         <td>2026-04-20</td>
