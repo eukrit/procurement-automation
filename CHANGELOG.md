@@ -4,6 +4,24 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.3.0] — 2026-04-24
+
+### Added — Solar Slewing Drive RFQ: SDE9 Dual Axis Solar Tracker
+- `data/china_solar_slewing_drive_suppliers.json` — 7 competing Chinese SDE9/slewing
+  drive manufacturers (Luoyang Hengguan, Xuzhou Wanda, Hangzhou Chinabase, Suzhou Haydon,
+  Shenzhen Topele, Yantai Hengfengtai, Luoyang Longwei). Benchmark: Jimmy Technology
+  (Huizhou) Co., Ltd. at THB 14,856/unit (2–99 pcs) — NOT contacted.
+- `scripts/seed_solar_slewing_rfq.py` — Seeds Firestore inquiry
+  `RFQ-GO-2026-04-SOLAR-SLEWING`, template `solar-slewing-rfq-v1`, and 7 vendor
+  documents. Bilingual (CN/EN) email asks for SDE9-equivalent quote, full slewing
+  drive range, catalog (PDF), and complete price list. Deadline 2026-05-07.
+  Slack routing: `#areda-mike`.
+- `scripts/setup_gmail_solar_filter.py` — Creates Gmail label `Suppliers/Solar`
+  (id=Label_518) and filter tagging inbound mail from all 11 vendor contact addresses.
+- Executed 2026-04-24 — 7 RFQ emails dispatched to all vendors, all status=`sent`.
+
+---
+
 ## [v1.2.0] — 2026-04-21
 
 ### Added — Rice Export RFQ: Thai Notion RFQ Page
