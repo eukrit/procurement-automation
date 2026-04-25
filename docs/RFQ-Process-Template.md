@@ -135,7 +135,7 @@ If card is missing, check `db().collection('rfq_inquiries').document(INQUIRY_ID)
 
 ## 9. Log & ship
 1. Append CHANGELOG entry (`[vX.Y.Z] — YYYY-MM-DD`, summary of spec + benchmark + vendor count + Slack channel + Gmail label).
-2. Update `build-summary.html` "Latest build" block + recent versions table.
+2. Update `docs/build-summary.html` "Latest build" block + recent versions table.
 3. Update `.claude/PROGRESS.md` (Last Touched, Recent Sessions).
 4. Commit on a feature branch → PR → merge to `main` (branch protection requires PR).
 
@@ -163,6 +163,6 @@ Manual intervention templates (Thai call-me, Notion mirror, etc.) live under `sc
 - [ ] HTML + PDF drafted; docs/index.html updated
 - [ ] Dry-run reviewed → RFQ sent
 - [ ] Dashboard card live (/rfq/<ID> loads)
-- [ ] CHANGELOG + build-summary.html + PROGRESS.md updated
+- [ ] CHANGELOG + docs/build-summary.html + PROGRESS.md updated
 - [ ] PR opened and merged
 ```

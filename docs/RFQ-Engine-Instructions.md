@@ -231,7 +231,7 @@ The dashboard page should include:
 - Automation pipeline timeline
 - Infrastructure details (inquiry ID, template, Slack channel, etc.)
 
-**Pattern:** Copy from `business-automation/docs/wallbox-ev-charger-rfq.html` and adapt.
+**Pattern:** Copy from `business-automation/docs/reports/wallbox-ev-charger-rfq.html` and adapt.
 
 **Commit to:** `eukrit/business-automation` repo → auto-deploys to GitHub Pages.
 

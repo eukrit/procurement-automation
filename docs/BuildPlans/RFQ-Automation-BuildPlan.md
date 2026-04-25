@@ -26,7 +26,7 @@ Context:
 - NEW Firestore DB: procurement-automation (us-central1, already created)
 - GCP project: ai-agents-go, service account: claude@ai-agents-go.iam.gserviceaccount.com
 - 20 freight forwarder candidates: data/china_thailand_freight_forwarders.json
-- RFQ document: docs/rfq-china-bangkok.html + docs/RFQ-GO-2026-04-FREIGHT-China-Bangkok.pdf
+- RFQ document: docs/reports/rfq-china-bangkok.html + docs/RFQ-GO-2026-04-FREIGHT-China-Bangkok.pdf
 - Freight rate baseline: scripts/freight_calculator_china_thai.py
 - Gemini model: gemini-2.5-flash
 - Gmail: send from eukrit@goco.bz, Reply-To shipping@goco.bz, CC shipping@goco.bz

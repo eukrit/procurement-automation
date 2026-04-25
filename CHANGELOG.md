@@ -164,7 +164,7 @@ All notable changes to the Procurement Automation system are documented here.
 - Initial project setup
 - Build plan: `docs/BuildPlans/RFQ-Automation-BuildPlan.md`
 - 20 China-Thailand freight forwarder candidates: `data/china_thailand_freight_forwarders.json`
-- RFQ document (HTML + PDF): `docs/rfq-china-bangkok.html`
+- RFQ document (HTML + PDF): `docs/reports/rfq-china-bangkok.html`
 - Freight rate baseline calculator: `scripts/freight_calculator_china_thai.py`
 - Firestore database `procurement-automation` created (us-central1)
 - Generic procurement schema designed for multi-category RFQ campaigns
