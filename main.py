@@ -2,15 +2,18 @@
 main.py — Cloud Function entry points for procurement automation.
 
 Entry points:
-  send_rfq              — HTTP trigger: dispatch RFQ emails to vendors
-  process_procurement_email — Pub/Sub trigger: handle inbound emails (Phase 3)
-  rfq_reminder_cron     — HTTP trigger: daily reminder cron (Phase 4)
+  send_rfq                  — HTTP trigger: dispatch RFQ emails to vendors
+  process_procurement_email — Pub/Sub (gmail-procurement-watch) — LEGACY, will decommission after bridge migration
+  process_classified_event  — Pub/Sub (gmail-classified-events) — bridge subscriber from data-communications
+  rfq_reminder_cron         — HTTP trigger: daily reminder cron (Phase 4)
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
+import os
 
 import functions_framework
 from google.cloud import firestore
@@ -723,3 +726,162 @@ def rfq_reminder_cron(request: Request):
         "total_actions": total_actions,
         "summaries": all_summaries,
     }, 200
+
+
+# ---------------------------------------------------------------------------
+# Bridge subscriber — gmail-classified-events (data-communications)
+# ---------------------------------------------------------------------------
+
+# Bridge migration is two-phase:
+#   1. Deploy with BRIDGE_DRY_RUN=true; observe logs for 7 days; the legacy
+#      process_procurement_email continues to drive real state changes.
+#   2. Set BRIDGE_DRY_RUN=false and decommission process_procurement_email
+#      (gmail-procurement-watch) atomically — at that point this is the only
+#      path that writes to Firestore / posts to Slack.
+#
+# See data-communications/docs/BRIDGE_CONTRACT.md for the envelope schema.
+
+_BRIDGE_PROCESSED_COLLECTION = "bridge_processed_messages"
+
+
+def _envelope_to_msg(envelope: dict) -> dict:
+    """Adapt a bridge envelope (schemaVersion=1) into the internal `msg`
+    shape produced today by gmail_reader._get_full_message, so the existing
+    _process_single_message chain works unchanged.
+    """
+    sender_email = envelope.get("senderEmail", "") or ""
+    body_text = envelope.get("bodyText", "") or ""
+    body_html = envelope.get("bodyHtmlStripped", "") or ""
+    headers = envelope.get("headers", {}) or {}
+    return {
+        "id": envelope.get("messageId", ""),
+        "threadId": envelope.get("threadId", ""),
+        "sender": envelope.get("from", ""),
+        "sender_email": sender_email.lower().strip(),
+        "subject": envelope.get("subject", ""),
+        "body_text": body_text,
+        "body_html": body_html,
+        "body_preview": (body_text or body_html or "")[:5000],
+        "attachments": envelope.get("attachments", []) or [],
+        "internalDate": envelope.get("internalDate", ""),
+        "labelIds": [],
+        "headers": {
+            "from": envelope.get("from", ""),
+            "to": ", ".join(envelope.get("to", []) or []),
+            "cc": ", ".join(envelope.get("cc", []) or []),
+            "date": headers.get("date", ""),
+            "message-id": headers.get("messageId", ""),
+            "in-reply-to": headers.get("inReplyTo", ""),
+            "references": headers.get("references", ""),
+        },
+    }
+
+
+def _is_relevant(envelope: dict) -> bool:
+    """Mirror the server-side subscription filter:
+        attributes.category = "procurement" OR attributes.vendorName != ""
+    Done in code so we don't depend on filtered-subscription wiring.
+    """
+    cls = envelope.get("classification", {}) or {}
+    if cls.get("primaryCategory") == "procurement":
+        return True
+    if (cls.get("vendorName") or "").strip():
+        return True
+    return False
+
+
+@functions_framework.cloud_event
+def process_classified_event(cloud_event):
+    """Pub/Sub trigger: consume gmail-classified-events from data-communications.
+
+    Behaviour:
+      - Drops messages where senderEmail == eukrit@goco.bz (loop prevention).
+      - Drops messages that are neither category=procurement nor have a vendorName.
+      - Idempotency: skips if `bridge_processed_messages/<messageId>` already exists.
+      - When BRIDGE_DRY_RUN=true (default), logs what it WOULD do and returns
+        without touching Firestore or Slack — the legacy
+        process_procurement_email path continues to handle real state.
+      - When BRIDGE_DRY_RUN=false, calls _process_single_message() — the
+        same path the legacy entry uses today.
+    """
+    dry_run = os.environ.get("BRIDGE_DRY_RUN", "true").lower() in ("1", "true", "yes")
+
+    try:
+        data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
+        envelope = json.loads(data)
+    except Exception as e:
+        logger.error("process_classified_event: invalid payload: %s", e)
+        return
+
+    msg_id = envelope.get("messageId", "")
+    sender_email = (envelope.get("senderEmail") or "").lower().strip()
+    cls = envelope.get("classification", {}) or {}
+    category = cls.get("primaryCategory", "")
+    sub_category = cls.get("subCategory", "")
+    vendor_name = cls.get("vendorName", "") or ""
+
+    # Loop prevention — never re-process our own outbound replies.
+    if sender_email == "eukrit@goco.bz":
+        logger.info("Bridge: dropping own-mailbox sender %s (loop guard)", msg_id)
+        return
+
+    if not _is_relevant(envelope):
+        logger.info(
+            "Bridge: not procurement-relevant — id=%s category=%s vendor=%r — skip",
+            msg_id, category, vendor_name,
+        )
+        return
+
+    logger.info(
+        "Bridge: relevant event id=%s category=%s/%s vendor=%r dry_run=%s",
+        msg_id, category, sub_category, vendor_name, dry_run,
+    )
+
+    db = get_db()
+
+    # Idempotency — skip if we already processed this messageId via the bridge.
+    seen_ref = db.collection(_BRIDGE_PROCESSED_COLLECTION).document(msg_id) if msg_id else None
+    if seen_ref is not None and seen_ref.get().exists:
+        logger.info("Bridge: %s already processed — skip", msg_id)
+        return
+
+    if dry_run:
+        # Record the would-have-happened observation for the 7-day audit window.
+        if seen_ref is not None:
+            try:
+                seen_ref.set({
+                    "messageId": msg_id,
+                    "category": category,
+                    "subCategory": sub_category,
+                    "vendorName": vendor_name,
+                    "senderEmail": sender_email,
+                    "dryRun": True,
+                    "schemaVersion": envelope.get("schemaVersion"),
+                    "observedAt": firestore.SERVER_TIMESTAMP,
+                })
+            except Exception as e:
+                logger.warning("Bridge dry-run audit write failed for %s: %s", msg_id, e)
+        return
+
+    # Live path — adapt to internal msg shape and run the existing chain.
+    msg = _envelope_to_msg(envelope)
+    try:
+        _process_single_message(msg, db)
+    except Exception as e:
+        logger.error("Bridge: error processing %s from %s: %s", msg_id, sender_email, e)
+        return
+
+    if seen_ref is not None:
+        try:
+            seen_ref.set({
+                "messageId": msg_id,
+                "category": category,
+                "subCategory": sub_category,
+                "vendorName": vendor_name,
+                "senderEmail": sender_email,
+                "dryRun": False,
+                "schemaVersion": envelope.get("schemaVersion"),
+                "processedAt": firestore.SERVER_TIMESTAMP,
+            })
+        except Exception as e:
+            logger.warning("Bridge live audit write failed for %s: %s", msg_id, e)

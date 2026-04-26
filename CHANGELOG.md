@@ -4,6 +4,22 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.6.0] — 2026-04-26
+
+### Added — Bridge subscriber for `gmail-classified-events`
+- New Cloud Function `process-classified-event` (Pub/Sub trigger on `gmail-classified-events` from `data-communications`). Entry point: `main.process_classified_event`. Decodes the v1 envelope (see `data-communications/docs/BRIDGE_CONTRACT.md`), drops own-mailbox senders (loop guard), drops non-procurement events (mirrors the server-side filter `category="procurement" OR vendorName != ""`), and adapts the envelope into the internal `msg` shape via `_envelope_to_msg` so the existing `_process_single_message` chain (`match_sender_to_vendor` → `classify_vendor_response` → `extract_vendor_rates` → `rfq_workflow`) works unchanged.
+- **Deployed in dry-run mode** (`BRIDGE_DRY_RUN=true`). For a 7-day audit window the legacy `process-procurement-email` (Pub/Sub on `gmail-procurement-watch`) continues to drive real state changes; the bridge subscriber observes the same traffic, writes to a new audit collection `bridge_processed_messages`, and posts/writes nothing else. Idempotency is keyed on `messageId` in that collection.
+- After 7 days of clean dry-run observation: flip `BRIDGE_DRY_RUN=false`, drop the legacy function deploy, stop renewing `gmail-procurement-watch`. From that point `data-communications` is the single intake for `eukrit@goco.bz`.
+
+### Files
+- `main.py` — added `process_classified_event` entry, `_envelope_to_msg`, `_is_relevant`.
+- `cloudbuild.yaml` — added `process-classified-event` deploy step.
+
+### Outcome
+Pending Cloud Build; legacy path untouched so this PR is risk-isolated.
+
+---
+
 ## [v1.5.0] — 2026-04-24
 
 ### Added — Solar PV (Back Contact) RFQ: `RFQ-GO-2026-04-SOLAR-PV`
