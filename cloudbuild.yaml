@@ -36,6 +36,26 @@ steps:
       - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true
       - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest,GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest
 
+  # Service 2b: Bridge subscriber (Pub/Sub gmail-classified-events from data-communications)
+  # Starts in dry-run mode. Flip BRIDGE_DRY_RUN=false and decommission `process-procurement-email`
+  # together once 7 days of clean dry-run observation pass — see CHANGELOG.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - process-classified-event
+      - --gen2
+      - --runtime=python312
+      - --region=us-central1
+      - --source=.
+      - --entry-point=process_classified_event
+      - --trigger-topic=gmail-classified-events
+      - --memory=512Mi
+      - --timeout=120s
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true,BRIDGE_DRY_RUN=true
+      - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest,GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest
+
   # Service 3: Reminder cron (HTTP, invoked by Cloud Scheduler) — Phase 4
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
