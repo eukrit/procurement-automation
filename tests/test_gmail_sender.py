@@ -262,3 +262,121 @@ class TestSendReminder:
             reminder_number=1,
         )
         assert result["skipped"] is True
+
+
+# ── Gmail Router dispatch tests ──────────────────────────────────────
+# Stage C migration: when USE_GMAIL_ROUTER is on, send_email() routes
+# through the central /send_email Cloud Function instead of building MIME
+# locally. Both paths return the same dict shape so callers don't change.
+
+
+class TestGmailRouterDispatch:
+    """When the feature flag is on, send_email forwards to the Router."""
+
+    def test_dispatches_to_router_when_flag_on(self):
+        with patch("src.gmail_sender.is_router_enabled", return_value=True), \
+             patch("src.gmail_sender.send_via_router") as mock_router:
+            mock_router.return_value = {
+                "message_id": "router-msg-1",
+                "thread_id": "router-thread-1",
+                "label_ids": [],
+            }
+            result = gmail_sender.send_email(
+                to="vendor@example.com",
+                subject="Test",
+                body_html="<p>Hi</p>",
+            )
+            assert result["message_id"] == "router-msg-1"
+            mock_router.assert_called_once()
+            kwargs = mock_router.call_args.kwargs
+            assert kwargs["to"] == ["vendor@example.com"]
+            assert kwargs["subject"] == "Test"
+            assert kwargs["body_html"] == "<p>Hi</p>"
+
+    def test_normalizes_string_recipients_before_router(self):
+        """Single-string `to`/`cc` must become lists before hitting the Router."""
+        with patch("src.gmail_sender.is_router_enabled", return_value=True), \
+             patch("src.gmail_sender.send_via_router") as mock_router:
+            mock_router.return_value = {
+                "message_id": "m", "thread_id": "t", "label_ids": [],
+            }
+            gmail_sender.send_email(
+                to="solo@example.com",
+                cc="cc-solo@example.com",
+                subject="x",
+                body_html="<p>y</p>",
+            )
+            kwargs = mock_router.call_args.kwargs
+            assert kwargs["to"] == ["solo@example.com"]
+            assert kwargs["cc"] == ["cc-solo@example.com"]
+
+    def test_passes_threading_fields_to_router(self):
+        with patch("src.gmail_sender.is_router_enabled", return_value=True), \
+             patch("src.gmail_sender.send_via_router") as mock_router:
+            mock_router.return_value = {
+                "message_id": "m", "thread_id": "t", "label_ids": [],
+            }
+            gmail_sender.send_email(
+                to="vendor@example.com",
+                subject="Re: RFQ",
+                body_html="<p>Reply</p>",
+                in_reply_to="<msg-orig@example.com>",
+                references="<msg-orig@example.com>",
+                thread_id="thread-12345",
+            )
+            kwargs = mock_router.call_args.kwargs
+            assert kwargs["thread_id"] == "thread-12345"
+            assert kwargs["in_reply_to"] == "<msg-orig@example.com>"
+            assert kwargs["references"] == "<msg-orig@example.com>"
+
+    def test_legacy_path_when_flag_off(self, mock_gmail_service):
+        """Default: flag off, never call the Router."""
+        with patch("src.gmail_sender.is_router_enabled", return_value=False), \
+             patch("src.gmail_sender.send_via_router") as mock_router:
+            result = gmail_sender.send_email(
+                to="test@example.com",
+                subject="Legacy Test",
+                body_html="<p>Body</p>",
+                service=mock_gmail_service,
+            )
+            assert result["message_id"] == "msg-123"
+            mock_router.assert_not_called()
+
+
+class TestGmailRouterClient:
+    """Direct tests for gmail_router_client._file_to_attachment_dict +
+    is_router_enabled. The HTTP-call path is best tested in integration.
+    """
+
+    def test_is_router_enabled_truthy_values(self):
+        from src import gmail_router_client
+        for val in ("true", "True", "TRUE", "1", "yes", "on"):
+            with patch.dict(os.environ, {"USE_GMAIL_ROUTER": val}, clear=False):
+                assert gmail_router_client.is_router_enabled() is True
+
+    def test_is_router_enabled_falsy_values(self):
+        from src import gmail_router_client
+        for val in ("", "false", "0", "no", "off", "anything-else"):
+            with patch.dict(os.environ, {"USE_GMAIL_ROUTER": val}, clear=False):
+                assert gmail_router_client.is_router_enabled() is False
+
+    def test_is_router_enabled_missing(self):
+        from src import gmail_router_client
+        env = {k: v for k, v in os.environ.items() if k != "USE_GMAIL_ROUTER"}
+        with patch.dict(os.environ, env, clear=True):
+            assert gmail_router_client.is_router_enabled() is False
+
+    def test_file_to_attachment_dict(self, tmp_path):
+        from src import gmail_router_client
+        f = tmp_path / "rfq.pdf"
+        f.write_bytes(b"%PDF-1.4 hello")
+        att = gmail_router_client._file_to_attachment_dict(str(f))
+        assert att["filename"] == "rfq.pdf"
+        assert att["mimeType"] == "application/pdf"
+        decoded = base64.b64decode(att["contentBase64"])
+        assert decoded == b"%PDF-1.4 hello"
+
+    def test_file_to_attachment_dict_missing(self):
+        from src import gmail_router_client
+        with pytest.raises(FileNotFoundError):
+            gmail_router_client._file_to_attachment_dict("/nonexistent/file.pdf")

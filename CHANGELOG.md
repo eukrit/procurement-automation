@@ -4,6 +4,96 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.7.0] — 2026-04-28
+
+### Added — Gmail Router migration (Stage C, dual-path with feature flag)
+
+The first consumer migration off a private `gmail_sender.py` and onto the
+central Gmail Router (`data-comms-send-email` in the `data-communications`
+repo). Soft cutover: both paths coexist behind `USE_GMAIL_ROUTER`; first
+deploy keeps the flag **off** so behaviour is unchanged.
+
+- **New module `src/gmail_router_client.py`** — HTTP client for Gmail
+  Router. `send_via_router(...)` mirrors the legacy `send_email` shape
+  (`{message_id, thread_id, label_ids}`) so all 3 callers (`rfq_workflow`,
+  `send_followups`, `send_rice_call_followup`) need zero changes.
+- **Authentication via metadata server** — `google.oauth2.id_token.fetch_id_token`
+  fetches a JWT whose `aud` claim equals the Gmail Router URL. Signed by
+  the Cloud Functions runtime SA (`538978391890-compute@developer`,
+  already added to `email_sender_allowlist` in data-communications). No
+  keys to manage.
+- **Attachments are read + base64-encoded** in the wrapper — Gmail Router
+  expects `{filename, mimeType, contentBase64}` whereas the legacy path
+  took raw filesystem paths. Same callers, transparent to them.
+- `src/gmail_sender.py` `send_email()` now dispatches on
+  `is_router_enabled()` (env `USE_GMAIL_ROUTER ∈ {true,1,yes,on}`).
+  When on: delegates to `send_via_router`. When off: legacy MIME-build
+  path runs unchanged. Recipient normalization (string → list) happens
+  before the dispatch so both paths see identical inputs.
+- `cloudbuild.yaml` — `USE_GMAIL_ROUTER=false` added to all 4 functions'
+  `--set-env-vars` so the flag is **explicitly visible** in the deploy
+  config. Flip to `true` (per function) via `gcloud functions deploy
+  --update-env-vars=USE_GMAIL_ROUTER=true` once the Router path is
+  verified for that function.
+- `requirements.txt` — added `requests>=2.32.0` (used by the Router HTTP
+  call; previously transitive).
+- **9 new tests** in `tests/test_gmail_sender.py`: `TestGmailRouterDispatch`
+  (4 tests covering flag-on dispatch, recipient normalization, threading
+  passthrough, flag-off legacy fallback) + `TestGmailRouterClient` (5
+  tests covering env-var truthy/falsy parsing, attachment encoding,
+  missing-file error). Existing 18 tests still pass — public API is
+  unchanged.
+
+### Why this migration first?
+
+Of the 6 outbound senders across the workspace, procurement-automation
+has the highest send volume (RFQ dispatch, follow-ups, reminders) and
+the most complex shape (CC, threading, attachments). If the Router can
+serve procurement-automation, it can serve the other 5.
+
+### Cutover plan
+
+1. **Deploy** with `USE_GMAIL_ROUTER=false` (this PR). Verify nothing breaks.
+2. Pick a low-traffic function (probably `rfq-reminder-cron` since it's
+   scheduled and easy to monitor). Flip its env var to `true`. Watch
+   the next reminder cycle. Confirm `email_sends` rows in the
+   data-communications Firestore have `caller="procurement-automation/gmail_sender"`
+   and `callerSa="538978391890-compute@developer.gserviceaccount.com"`.
+3. Flip `send-rfq` next. Then `process-procurement-email`. Then the
+   bridge subscriber.
+4. Once all 4 are running on the Router for ~1 week, flip the cloudbuild
+   defaults to `USE_GMAIL_ROUTER=true` and remove the legacy MIME path
+   from `gmail_sender.py`. Delete `gmail_auth.py` if no other module
+   uses it.
+
+### Files
+
+- `src/gmail_router_client.py` (new) — `send_via_router`,
+  `_file_to_attachment_dict`, `is_router_enabled`.
+- `src/gmail_sender.py` — dispatch in `send_email`.
+- `tests/test_gmail_sender.py` — `TestGmailRouterDispatch` (4),
+  `TestGmailRouterClient` (5).
+- `cloudbuild.yaml` — `USE_GMAIL_ROUTER=false` added to all 4 functions.
+- `requirements.txt` — `requests>=2.32.0`.
+
+### Outstanding
+
+- Flag is `false` in this PR. **No behaviour change at deploy time.**
+  Manual env-var flip required to actually exercise the Router path
+  in production.
+- Once all callers run on the Router for a week, delete the legacy MIME
+  path. That follow-up is tracked but deliberately out of scope here —
+  a single-PR rip-and-replace is too risky for the org's primary
+  outbound channel.
+- The 5 other outbound senders (accounting-automation × 3, shipping-automation,
+  go-documents, human-resources, 2025 Latirra Ads) are still on private
+  paths. Their migrations follow this same template once procurement
+  is verified.
+
+### Outcome
+
+Pending push + Cloud Build deploy. Pure additive at the deploy boundary.
+
 ## [v1.6.0] — 2026-04-26
 
 ### Added — Bridge subscriber for `gmail-classified-events`
