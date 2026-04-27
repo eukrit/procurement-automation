@@ -149,9 +149,33 @@ else
   git push -u origin "$CURRENT_BRANCH"
 fi
 
-# ---- Auto-merge feature branches (Rule 5 step 4) ----
+PUSHED_SHA=$(git rev-parse HEAD)
+
+# ---- CI/CD gate (Rule 5 step 4.5) ----
+# Wait for Cloud Build + GitHub Actions on this commit; abort merge on failure.
+# Block on direct-to-main pushes too: surface the failing build URL even though
+# we can't un-push (the next commit becomes the rollback driver).
 DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+CI_OK=1
+if [ -x "./scripts/check-ci-status.sh" ]; then
+  echo "[auto-commit] running CI/CD gate for ${PUSHED_SHA:0:12} ..."
+  if ./scripts/check-ci-status.sh "$PUSHED_SHA"; then
+    CI_OK=1
+  else
+    CI_RC=$?
+    CI_OK=0
+    echo "[auto-commit] CI/CD gate failed (rc=${CI_RC}) — admin-merge BLOCKED." >&2
+  fi
+else
+  echo "[auto-commit] no scripts/check-ci-status.sh — skipping CI gate (run bootstrap-hub-pages.sh to install)."
+fi
+
+# ---- Auto-merge feature branches (Rule 5 step 4) ----
 if [ "$NO_MERGE" -eq 0 ] && [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "master" ]; then
+  if [ "$CI_OK" -ne 1 ]; then
+    echo "[auto-commit] feature branch ${CURRENT_BRANCH} pushed but NOT merged — fix CI then re-run with --no-push." >&2
+    exit 1
+  fi
   if command -v gh >/dev/null 2>&1; then
     echo "[auto-commit] opening + admin-squash-merging PR for ${CURRENT_BRANCH} → ${DEFAULT_BRANCH} ..."
     gh pr create --fill --base "$DEFAULT_BRANCH" --head "$CURRENT_BRANCH" 2>/dev/null || true
