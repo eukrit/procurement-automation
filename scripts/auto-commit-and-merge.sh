@@ -47,7 +47,19 @@ if [ -z "$PROJECT_ROOT" ]; then
   exit 1
 fi
 cd "$PROJECT_ROOT"
-PROJECT_NAME=$(basename "$PROJECT_ROOT")
+WORKTREE_NAME=$(basename "$PROJECT_ROOT")
+
+# Resolve the MAIN repo directory so the repo-mapping check works from a linked
+# worktree. `git rev-parse --git-common-dir` returns the path to the main repo's
+# .git (shared across all worktrees); its parent is the main checkout.
+GIT_COMMON_DIR="$(git rev-parse --git-common-dir 2>/dev/null || echo ".git")"
+GIT_COMMON_ABS="$(cd "$GIT_COMMON_DIR" 2>/dev/null && pwd)"
+if [ -n "$GIT_COMMON_ABS" ]; then
+  MAIN_REPO_DIR="$(dirname "$GIT_COMMON_ABS")"
+else
+  MAIN_REPO_DIR="$PROJECT_ROOT"
+fi
+PROJECT_NAME=$(basename "$MAIN_REPO_DIR")
 
 # ---- Opt-out gates (Rule 5) ----
 if [ -f ".claude/autocommit.opt-out" ]; then
@@ -58,7 +70,9 @@ fi
 # ---- Rule 0: goco-project-template protection ----
 REMOTE_URL=$(git config --get remote.origin.url 2>/dev/null || echo "")
 REMOTE_NAME=$(basename -s .git "$REMOTE_URL" 2>/dev/null || echo "")
-if [ "$PROJECT_NAME" = "goco-project-template" ] || [ "$REMOTE_NAME" = "goco-project-template" ]; then
+if [ "$WORKTREE_NAME" = "goco-project-template" ] \
+   || [ "$PROJECT_NAME" = "goco-project-template" ] \
+   || [ "$REMOTE_NAME" = "goco-project-template" ]; then
   echo "[auto-commit] goco-project-template is READ-ONLY (Rule 0). Aborting." >&2
   exit 1
 fi
