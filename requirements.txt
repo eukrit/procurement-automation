@@ -5,6 +5,7 @@ google-auth>=2.29.0
 google-api-python-client>=2.120.0
 google-genai>=1.0.0
 functions-framework>=3.5.0
+requests>=2.32.0  # gmail_router_client HTTP calls to data-comms-send-email
 
 # Slack
 slack-sdk>=3.27.0

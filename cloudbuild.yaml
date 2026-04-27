@@ -15,7 +15,7 @@ steps:
       - --allow-unauthenticated
       - --memory=512Mi
       - --timeout=300s
-      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,USE_GMAIL_ROUTER=false
       - --set-secrets=GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest
 
   # Service 2: Process inbound emails (Pub/Sub) — Phase 3
@@ -33,7 +33,7 @@ steps:
       - --trigger-topic=gmail-procurement-watch
       - --memory=512Mi
       - --timeout=120s
-      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,USE_GMAIL_ROUTER=false,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true
       - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest,GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest
 
   # Service 2b: Bridge subscriber (Pub/Sub gmail-classified-events from data-communications)
@@ -53,7 +53,7 @@ steps:
       - --trigger-topic=gmail-classified-events
       - --memory=512Mi
       - --timeout=120s
-      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true,BRIDGE_DRY_RUN=true
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,IMPERSONATE_USER=eukrit@goco.bz,USE_GMAIL_ROUTER=false,SLACK_CHANNEL=C08VD9PRSCU,GEMINI_ENABLED=true,BRIDGE_DRY_RUN=true
       - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest,GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest
 
   # Service 3: Reminder cron (HTTP, invoked by Cloud Scheduler) — Phase 4
@@ -72,5 +72,5 @@ steps:
       - --allow-unauthenticated
       - --memory=256Mi
       - --timeout=120s
-      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,SLACK_CHANNEL=C08VD9PRSCU
+      - --set-env-vars=GCP_PROJECT=ai-agents-go,FIRESTORE_DATABASE=procurement-automation,SLACK_CHANNEL=C08VD9PRSCU,USE_GMAIL_ROUTER=false
       - --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest,GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest

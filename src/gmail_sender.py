@@ -1,8 +1,18 @@
 """
 gmail_sender.py — Gmail send client for procurement automation.
 
-Uses domain-wide delegation via service account to send as eukrit@goco.bz.
-Supports: RFQ dispatch, auto-replies in thread, reminders, and generic email.
+Two send paths, dispatched on USE_GMAIL_ROUTER:
+  1. **Gmail Router** (USE_GMAIL_ROUTER=true) — POST to the central
+     `data-comms-send-email` Cloud Function. Single org-wide chokepoint,
+     single audit log, single Gmail DWD identity. Auth via metadata-server
+     ID token + Firestore allowlist.
+  2. **Legacy direct** (default) — Build MIME locally, send via
+     domain-wide-delegated Gmail API impersonating eukrit@goco.bz. The
+     original path; kept during soft cutover so we can flip back if the
+     Router has issues.
+
+Both paths return the same dict shape `{message_id, thread_id, label_ids}`
+so RFQ dispatch, auto-replies, reminders, and generic callers don't change.
 """
 
 from __future__ import annotations
@@ -18,6 +28,7 @@ from email import encoders
 from pathlib import Path
 
 from src.gmail_auth import build_gmail_service
+from src.gmail_router_client import is_router_enabled, send_via_router
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +78,9 @@ def send_email(
 ) -> dict:
     """Send an email via Gmail API.
 
+    Path is chosen by `USE_GMAIL_ROUTER` env var (see module docstring).
+    Both paths return the same shape: `{message_id, thread_id, label_ids}`.
+
     Args:
         to: Recipient email(s).
         subject: Email subject line.
@@ -77,18 +91,32 @@ def send_email(
         in_reply_to: Message-ID to reply to (for threading).
         references: References header (for threading).
         thread_id: Gmail thread ID to place message in.
-        service: Pre-built Gmail service (optional).
+        service: Pre-built Gmail service (legacy path only; ignored when
+            the Router is in use).
 
     Returns:
         dict with 'message_id', 'thread_id', 'label_ids'.
     """
-    service = service or get_gmail_send_service()
-
-    # Normalize recipients
+    # Normalize recipients early so both paths see identical inputs.
     if isinstance(to, str):
         to = [to]
     if isinstance(cc, str):
         cc = [cc]
+
+    if is_router_enabled():
+        return send_via_router(
+            to=to,
+            subject=subject,
+            body_html=body_html,
+            cc=cc,
+            reply_to=reply_to,
+            in_reply_to=in_reply_to,
+            references=references,
+            thread_id=thread_id,
+            attachments=attachments,
+        )
+
+    service = service or get_gmail_send_service()
 
     # Build message
     if attachments:
