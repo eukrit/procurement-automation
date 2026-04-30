@@ -198,7 +198,7 @@ def send_rfq(request: Request):
 
         except Exception as e:
             error_count += 1
-            logger.error("Failed to send to %s: %s", vendor_id, str(e))
+            logger.error("Failed to send to %s: %s", vendor_id, type(e).__name__)
             results.append({
                 "vendor_id": vendor_id,
                 "status": "error",
@@ -226,7 +226,7 @@ def send_rfq(request: Request):
                 channel=_slack_channel_for(inquiry),
             )
         except Exception as e:
-            logger.error("Slack notify_rfq_dispatched failed: %s", e)
+            logger.error("Slack notify_rfq_dispatched failed: %s", type(e).__name__)
 
     response = {
         "inquiry_id": inquiry_id,
@@ -269,7 +269,7 @@ def process_procurement_email(cloud_event):
     try:
         messages = get_new_messages(db=db)
     except Exception as e:
-        logger.error("Failed to fetch Gmail messages: %s", e)
+        logger.error("Failed to fetch Gmail messages: %s", type(e).__name__)
         return
 
     if not messages:
@@ -431,7 +431,7 @@ def _handle_rate_quote(
             channel=slack_channel,
         )
     except Exception as e:
-        logger.error("Slack notify_new_response failed: %s", e)
+        logger.error("Slack notify_new_response failed: %s", type(e).__name__)
 
     # Check rate anomalies vs baseline
     if extraction.get("rates"):
@@ -449,7 +449,7 @@ def _handle_rate_quote(
                         channel=slack_channel,
                     )
                 except Exception as e:
-                    logger.error("Slack rate anomaly notify failed: %s", e)
+                    logger.error("Slack rate anomaly notify failed: %s", type(e).__name__)
 
     # If there are still questions or missing fields, optionally auto-reply
     if missing or classification.get("questions_from_vendor"):
@@ -563,10 +563,10 @@ def _handle_questions_or_missing(
                     channel=_slack_channel_for(inquiry),
                 )
             except Exception as e:
-                logger.error("Slack auto-reply notify failed: %s", e)
+                logger.error("Slack auto-reply notify failed: %s", type(e).__name__)
 
         except Exception as e:
-            logger.error("Failed to send auto-reply to %s: %s", vendor_id, e)
+            logger.error("Failed to send auto-reply to %s: %s", vendor_id, type(e).__name__)
 
     elif reply_confidence >= 0.6:
         # Draft for Slack approval
@@ -626,7 +626,7 @@ def _send_slack_escalation(
             channel=_slack_channel_for(inquiry),
         )
     except Exception as e:
-        logger.error("Slack escalation failed: %s", e)
+        logger.error("Slack escalation failed: %s", type(e).__name__)
 
 
 def _send_slack_draft_approval(
@@ -651,7 +651,7 @@ def _send_slack_draft_approval(
             channel=_slack_channel_for(inquiry),
         )
     except Exception as e:
-        logger.error("Slack draft approval failed: %s", e)
+        logger.error("Slack draft approval failed: %s", type(e).__name__)
 
 
 @functions_framework.http
@@ -706,7 +706,7 @@ def rfq_reminder_cron(request: Request):
             try:
                 notify_reminder_summary(inq_id, summary)
             except Exception as e:
-                logger.error("Slack reminder summary failed for %s: %s", inq_id, e)
+                logger.error("Slack reminder summary failed for %s: %s", inq_id, type(e).__name__)
 
     total_actions = sum(
         s.get("reminder_1_sent", 0) + s.get("reminder_2_sent", 0) +
@@ -810,7 +810,7 @@ def process_classified_event(cloud_event):
         data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
         envelope = json.loads(data)
     except Exception as e:
-        logger.error("process_classified_event: invalid payload: %s", e)
+        logger.error("process_classified_event: invalid payload: %s", type(e).__name__)
         return
 
     msg_id = envelope.get("messageId", "")
@@ -868,7 +868,7 @@ def process_classified_event(cloud_event):
     try:
         _process_single_message(msg, db)
     except Exception as e:
-        logger.error("Bridge: error processing %s from %s: %s", msg_id, sender_email, e)
+        logger.error("Bridge: error processing %s from %s: %s", msg_id, sender_email, type(e).__name__)
         return
 
     if seen_ref is not None:

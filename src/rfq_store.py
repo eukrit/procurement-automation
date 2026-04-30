@@ -31,25 +31,35 @@ TEMPLATES = "procurement_templates"
 WORKFLOW_CONFIG = "workflow_config"
 
 
-def _resolve_credentials():
-    """Resolve credentials from GOOGLE_APPLICATION_CREDENTIALS.
+def _scrub_bad_gac_env() -> None:
+    """If GOOGLE_APPLICATION_CREDENTIALS holds JSON content (not a file path),
+    unset it before any google-auth call sees it.
 
-    Handles the JSON-string case (Cloud Run --set-secrets injects the secret
-    value, not a file path) as well as the normal file-path case.
+    Background: Cloud Run's `--set-secrets=GOOGLE_APPLICATION_CREDENTIALS=…`
+    used to inject the SA key JSON as the env var VALUE. google.auth then
+    tried to open that value as a file path, failed, and echoed the entire
+    private key into the error message — leaking the SA key to Cloud Logging.
+    See SECURITY.md / CHANGELOG v1.6.0.
+
+    This guard makes the leak impossible regardless of how the env var was
+    populated: if it looks like JSON, drop it and rely on ADC via the runtime
+    service account (Cloud Run metadata server) or `gcloud auth application-default
+    login` locally.
     """
     raw = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
     if raw.lstrip().startswith("{"):
-        info = json.loads(raw)
-        return service_account.Credentials.from_service_account_info(info)
-    return None  # let google.auth.default() handle it
+        # Don't log the value — that's exactly the bug we're preventing.
+        os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
+
+
+_scrub_bad_gac_env()
 
 
 def get_db() -> firestore.Client:
-    creds = _resolve_credentials()
-    kwargs = dict(project=GCP_PROJECT, database=FIRESTORE_DATABASE)
-    if creds:
-        kwargs["credentials"] = creds
-    return firestore.Client(**kwargs)
+    # Use ADC. On Cloud Run this resolves to the runtime SA via metadata server.
+    # Locally it resolves to GOOGLE_APPLICATION_CREDENTIALS (file path) or
+    # `gcloud auth application-default login` credentials.
+    return firestore.Client(project=GCP_PROJECT, database=FIRESTORE_DATABASE)
 
 
 def _now() -> datetime:

@@ -4,6 +4,55 @@ All notable changes to the Procurement Automation system are documented here.
 
 ---
 
+## [v1.8.0] — 2026-04-30 — SECURITY: SA private key leak via GAC-as-secret
+
+### Incident summary
+Cloud Run services in this repo (`send-rfq`, `process-procurement-email`,
+`rfq-reminder-cron`, plus the dry-run bridge `process-classified-event`)
+and the sibling `shipping-automation` repo bound
+`GOOGLE_APPLICATION_CREDENTIALS` to a Secret Manager secret via Cloud Build's
+`--set-secrets=`. Cloud Run injects the secret VALUE (not a file path) into
+the env var. `google.auth.default()` then opened the JSON content as a file
+path, failed, and `DefaultCredentialsError("File {value} was not found.")`
+echoed the **entire SA private key** into Cloud Logging on every error.
+
+Trigger: `slack_notifier._get_slack_token()` and `gmail_client.get_last_history_id`
+hit this path on transient failures. Most recent leak before remediation:
+2026-04-30 11:32:33 UTC.
+
+### Remediation (this commit)
+- **Code**:
+  - `src/rfq_store.py`, `src/gmail_auth.py`: scrub-guard removes JSON-content
+    from `GOOGLE_APPLICATION_CREDENTIALS` at module import; helpers no longer
+    parse JSON-from-env. `gmail_auth` fetches SA key from SM at runtime via
+    runtime SA's `secretAccessor` instead of env-var injection.
+  - `src/slack_notifier.py`: error paths log `type(e).__name__` only — never
+    raw exception strings that may carry auth payloads.
+  - `main.py`: 12 `logger.error(..., e)` call sites sanitized (Rule 12a).
+- **Cloud Build**:
+  - `cloudbuild.yaml`: removed all `GOOGLE_APPLICATION_CREDENTIALS=gmail-service-account:latest`
+    bindings (4 occurrences). Added explicit
+    `--service-account=claude@ai-agents-go.iam.gserviceaccount.com` so deploys
+    set the runtime SA correctly. Inline warning blocks against re-introducing.
+- **Operational** (executed via gcloud, not in this commit):
+  - Revoked leaked key id `9b4219be8c01…` on `claude@ai-agents-go.iam`.
+  - Minted new key `0d28f3991b7b…`, pushed to SM (`gmail-service-account` v3),
+    synced to local `credentials/`. Old SM versions (1, 2) destroyed.
+  - Patched 4 Cloud Run services to drop the bad env binding and switched
+    runtime SA to `claude@`. Smoke tests pass; no further leaks observed
+    since 2026-04-30 11:33 UTC.
+
+### Residual risk
+- Leaked log entries for the *old* (now revoked) key remain in `_Default`
+  log bucket until 30-day auto-purge (~2026-05-30). The old key is
+  cryptographically inert; only `eukrit@goco.bz` has logs.viewer access.
+- Same fix is required in `shipping-automation`; tracked in that repo.
+
+### Doc/config updates
+- `.env.example`: updated stale key-id reference to new fingerprint.
+
+---
+
 ## [v1.7.0] — 2026-04-28
 
 ### Added — Gmail Router migration (Stage C, dual-path with feature flag)
@@ -93,7 +142,6 @@ serve procurement-automation, it can serve the other 5.
 ### Outcome
 
 Pending push + Cloud Build deploy. Pure additive at the deploy boundary.
-
 ## [v1.6.0] — 2026-04-26
 
 ### Added — Bridge subscriber for `gmail-classified-events`

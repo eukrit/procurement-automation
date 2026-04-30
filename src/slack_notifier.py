@@ -26,7 +26,13 @@ _slack_client = None
 
 
 def _get_slack_token() -> str:
-    """Get Slack bot token from Secret Manager or env var."""
+    """Get Slack bot token from Secret Manager or env var.
+
+    Error paths echo a sanitized summary only (Rule 12a). Some auth-error
+    messages from google-auth embed the entire env-var value (which used to
+    leak the SA private key when GOOGLE_APPLICATION_CREDENTIALS was bound to
+    a Secret Manager secret). Never log raw exception strings on this path.
+    """
     token = os.environ.get("SLACK_BOT_TOKEN")
     if token:
         return token
@@ -36,8 +42,9 @@ def _get_slack_token() -> str:
         response = client.access_secret_version(request={"name": name})
         return response.payload.data.decode("utf-8").strip()
     except Exception as e:
-        logger.error("Failed to get Slack token: %s", e)
-        raise
+        # Sanitized: type only, no message content.
+        logger.error("Failed to get Slack token: %s", type(e).__name__)
+        raise RuntimeError("slack-token-fetch-failed") from None
 
 
 def get_slack_client() -> WebClient:
@@ -65,10 +72,14 @@ def _post_message(
         )
         return response.data
     except SlackApiError as e:
+        # Slack error codes are short ids ("invalid_auth", "channel_not_found")
+        # and safe to log; the wrapping exception object can include request
+        # bodies, so don't log e itself.
         logger.error("Slack error: %s", e.response["error"])
         return None
     except Exception as e:
-        logger.error("Slack send failed: %s", e)
+        # Sanitized: type only, no message content.
+        logger.error("Slack send failed: %s", type(e).__name__)
         return None
 
 
