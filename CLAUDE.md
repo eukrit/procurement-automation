@@ -24,7 +24,7 @@ AI-powered procurement automation for GO Corporation. Manages RFQ workflows, ven
 
 ### Credentials
 - All API credentials in Google Secret Manager (project: ai-agents-go)
-- Service account key: `ai-agents-go-9b4219be8c01.json` (local only, gitignored)
+- Service account key: `ai-agents-go-0d28f3991b7b.json` (local only, gitignored)
 - Do NOT store credentials in code or commits
 
 ### GCP Details

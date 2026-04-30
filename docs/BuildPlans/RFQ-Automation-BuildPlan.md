@@ -506,7 +506,7 @@ IMPERSONATE_USER = os.environ.get("IMPERSONATE_USER", "eukrit@goco.bz")
 
 def get_gmail_service():
     credentials = service_account.Credentials.from_service_account_file(
-        "ai-agents-go-9b4219be8c01.json",  # local only
+        "ai-agents-go-0d28f3991b7b.json",  # local only
         scopes=GMAIL_SEND_SCOPES,
     )
     delegated = credentials.with_subject(IMPERSONATE_USER)
